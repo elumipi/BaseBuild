@@ -25,19 +25,17 @@ This version of the ElumiPi build supports:
 `sudo raspi-config`
 `sudo reboot`
 
-*NOTE: for WIFI to work on the RaspberryPi 2 unit, you must have the WIFI USB dongle inserted
-during installation so that the install script can configure it properly. RaspberryPi 3 models have on board WiFi and don't need a WIFI USB dongle.
-
 5. paste in the following command after reboot.
-
 `curl -fsS https://raw.githubusercontent.com/rachelproject/rachelpiOS/master/installer.py | python`
 
 Please note that this will change the 'pi' user's password to: elumipi
 
 All default username and passwords will be elumipi/elumipi unless noted differently.
 
-*NOTE: This install is tested to work with `2016-05-27-raspbian-jessie` and is known to have problems with newer versions*
+*NOTE1: This install is tested to work with `2016-05-27-raspbian-jessie` and is known to have problems with newer versions*
 
+*NOTE2: for WIFI to work on the RaspberryPi 2 unit, you must have the WIFI USB dongle inserted
+during installation so that the install script can configure it properly. RaspberryPi 3 models have on board WiFi and don't need a WIFI USB dongle.
 Last updated : 2017/6/28
 
 Original source : https://github.com/rachelproject/rachelpios
