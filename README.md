@@ -14,10 +14,11 @@ THIS IS WORK IN PROGRESS: DO NOT USE!!!!
 This version of the ElumiPi build supports:
 - Secured WiFi access point
 - Local DHCP, DNS
-- Android application store 
+- Android application store
 - Web pages for management of the sytem and content management
 - WiKiPedia alike functions
-- Mail and calender functionality   
+- Mail and calender functionality
+- Dynamic content addition through USB storage   
  
 ## Installation
 1. Install a base RaspBian image on a SD card and insert it into the RaspberryPi.
