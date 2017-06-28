@@ -15,6 +15,7 @@ This version of the ElumiPi build supports:
 - Mail and calender functionality   
  
 # Installation
+<<<<<<< HEAD
 1. Install a base RaspBian image on a SD card and insert it into the RaspberryPi.
 
 2. Powerup the RaspberryPi and wait for the initial boot process to complete
@@ -36,6 +37,31 @@ All default username and passwords will be elumipi/elumipi unless noted differen
 
 *NOTE2: for WIFI to work on the RaspberryPi 2 unit, you must have the WIFI USB dongle inserted
 during installation so that the install script can configure it properly. RaspberryPi 3 models have on board WiFi and don't need a WIFI USB dongle.
+=======
+Install a base RaspBian image on a SD card and insert it into the RaspberryPi.
+
+Powerup the RaspberryPi and wait for the initial boot process to complete
+
+Logon with user pi (password: raspberry)
+  
+Expand your microSD card partition
+`sudo raspi-config`
+`sudo reboot`
+
+*NOTE: for WIFI to work on the RaspberryPi 2 unit, you must have the WIFI USB dongle inserted
+during installation so that the install script can configure it properly. RaspberryPi 3 models have on board WiFi and don't need a WIFI USB dongle.
+
+paste in the following command after reboot.
+
+`curl -fsS https://raw.githubusercontent.com/rachelproject/rachelpiOS/master/installer.py | python`
+
+Please note that this will change the 'pi' user's password to: elumipi
+
+All default username and passwords will be elumipi/elumipi unless noted differently.
+
+*NOTE: This install is tested to work with `2016-05-27-raspbian-jessie` and is known to have problems with newer versions*
+
+>>>>>>> refs/remotes/origin/develop
 Last updated : 2017/6/28
 
 Original source : https://github.com/rachelproject/rachelpios

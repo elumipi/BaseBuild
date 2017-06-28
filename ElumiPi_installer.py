@@ -78,8 +78,8 @@ def install_kiwix():
 	# are installed you can still tell that kiwix is running
 	cp("files/kiwix-sample.zim", "/var/kiwix/sample.zim") or die("Unable to install kiwix sample zim")
 	cp("files/kiwix-sample-library.xml", "/var/kiwix/sample-library.xml") or die("Unable to install kiwix sample library")
-	cp("files/rachel-kiwix-start.pl", "/var/kiwix/bin/rachel-kiwix-start.pl") or die("Unable to coppy rachel-kiwix-start wrapper")
-	sudo("chmod +x /var/kiwix/bin/rachel-kiwix-start.pl") or die("Unable to set permissions on rachek-kiwix-start wrapper")
+	cp("files/dean-kiwix-start.pl", "/var/kiwix/bin/dean-kiwix-start.pl") or die("Unable to coppy rachel-kiwix-start wrapper")
+	sudo("chmod +x /var/kiwix/bin/dean-kiwix-start.pl") or die("Unable to set permissions on rachek-kiwix-start wrapper")
 	cp("files/init-kiwix-service", "/etc/init.d/kiwix") or die("Unable to install kiwix service")
 	sudo("chmod +x /etc/init.d/kiwix") or die("Unable to set permissions on kiwix service.")
 	sudo("update-rc.d kiwix defaults") or die("Unable to register the kiwix service.")
