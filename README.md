@@ -63,7 +63,6 @@ All default username and passwords will be elumipi/elumipi unless noted differen
 
 *NOTE: This install is tested to work with `2016-05-27-raspbian-jessie` and is known to have problems with newer versions*
 
->>>>>>> refs/remotes/origin/develop
 Last updated : 2017/6/28
 
 Original source : https://github.com/rachelproject/rachelpios
