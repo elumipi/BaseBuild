@@ -7,10 +7,10 @@ Purpose is to provide a classroom environment for educational project in Tanzani
 
 Please visit http://www.dean.ngo/ict4e/digital-classroom-box-elimupi/ for more information
 
-# Introduction
+## Introduction
 THIS IS WORK IN PROGRESS: DO NOT USE!!!!
 
-# Functions
+## Functions
 This version of the ElumiPi build supports:
 - Secured WiFi access point
 - Local DHCP, DNS
@@ -19,7 +19,7 @@ This version of the ElumiPi build supports:
 - WiKiPedia alike functions
 - Mail and calender functionality   
  
-# Installation
+## Installation
 1. Install a base RaspBian image on a SD card and insert it into the RaspberryPi.
 
 2. Powerup the RaspberryPi and wait for the initial boot process to complete
