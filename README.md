@@ -5,6 +5,9 @@ This is a fork of the Rachel image for DEAN. Purpose is to provide a classroom e
 
 Please visit http://www.dean.ngo for more information
 
+# Introduction
+THIS IS WORK IN PROGRESS: DO NOT USE!!!!
+
 # Functions
 This version of the ElumiPi build supports:
 - Secured WiFi access point
