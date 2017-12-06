@@ -5,7 +5,7 @@
 #
 #    Date        |By     | Desxcription
 # ---------------+-------+----------------------------------------
-#    2017-Apr-3  | PVe   | Initial fork
+#    2017-Apr-3  | PVe   | Initial fork 
 #    2017-Jun-28 | PVe   | Updated base configuration
 #
 #=========================================================================================================
@@ -17,6 +17,18 @@ import shutil
 import urllib
 import argparse
 
+#=========================================================================================================
+# Settings for build
+#=========================================================================================================
+base_user="pi"              # Default user name to use
+base_passwd="elumipi"       # Default password for all services
+base_ip_range="10.11.0"     # IP range (/24) for the WiFI interface
+base_ip="10.11.0.1"         # Default IP address for the WiFi interface
+base_build="ELUMIPI-20171022"
+
+#=========================================================================================================
+# Command line arguments
+#=========================================================================================================
 argparser = argparse.ArgumentParser()
 argparser.add_argument( "--khan-academy",
                        choices=["none", "ka-lite"],
@@ -27,18 +39,6 @@ argparser.add_argument("--no-wifi",
                        action="store_false",
                        help="Do not configure local wifi hotspot.")
 args = argparser.parse_args()
-
-#=========================================================================================================
-# Settings for build
-#=========================================================================================================
-sql_passwd=elumipi
-
-#=========================================================================================================
-#    Citadel mail functionality
-#=========================================================================================================
-def install_Citadel():
-    print "Citadel installation script in development"
-    return True
 
 #=========================================================================================================
 #    USB Content management 
@@ -87,6 +87,64 @@ def install_kiwix():
 	sudo("sh -c 'echo "+kiwix_version+" >/etc/kiwix-version'") or die("Unable to record kiwix version.")
 	return True
 
+#=========================================================================================================
+#    Citadel MAIL solutiuon 
+#=========================================================================================================
+def install_citadel():
+    print "Installing CitaDel mail solution"
+    sudo("sudo apt-get install citadel-suite")
+    # Installation steps
+    return True
+
+#=========================================================================================================
+# WordPress installer
+#=========================================================================================================
+def install_wordpress():
+    sudo("cd /var/www/html/")   # check if this is OK!!!!!!
+    sudo("rm *")
+    sudo("wget http://wordpress.org/latest.tar.gz")  
+    sudo("tar xzf latest.tar.gz")
+    sudo("mv wordpress/* .")
+    sudo("rm -rf wordpress latest.tar.gz")
+    sudo("chown -R www-data: .")
+    # Setup database for WordPress
+    sudo("mysql --user=" + base_user + " --password=" + base_passwd + " <files/create_wordpress.sql" )
+    # CURL to index.php 
+    return True
+
+#=========================================================================================================
+# Apache installer
+#=========================================================================================================
+def install_apache():
+    print "========================================="
+    print "Installing WEB platform"
+    print "========================================="
+    sudo("apt-get -y install apache2 libxml2-dev \
+         php7.0-common libapache2-mod-php7.0 php7.0-cgi php7.0 php7.0-dev php-pear \
+         mysql-server mysql-client php7.0-mysql sqlite3 php7.0-sqlite3") or die("Unable to install web platform.")
+    # Install word stemming (transform to actual words)
+    
+    # Fails to compile!!!!!!
+    sudo("yes '' | sudo pecl install -f stem") or die("Unable to install php stemmer")
+    
+    # Install stemming
+    sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php7.0/cli/php.ini'") or die("Unable to install stemmer CLI config")
+    sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php7.0/apache2/php.ini'") or die("Unable to install stemmer Apache config")
+    sudo("sh -c 'sed -i \"s/upload_max_filesize *= *.*/upload_max_filesize = 512M/\" /etc/php5/apache2/php.ini'") or die("Unable to increase upload_max_filesize in apache2/php.ini")
+    sudo("sh -c 'sed -i \"s/post_max_size *= *.*/post_max_size = 512M/\" /etc/php7.0/apache2/php.ini'") or die("Unable to increase post_max_size in apache2/php.ini")
+    sudo("service apache2 stop") or die("Unable to stop Apache2.")
+    
+    #cp("files/apache2.conf", "/etc/apache2/apache2.conf") or die("Unable to copy Apache2.conf")
+    cp("files/default", "/etc/apache2/sites-available/contentshell.conf") or die("Unable to set default Apache site.")
+    sudo("a2dissite 000-default") or die("Unable to disable default Apache site.")
+    sudo("a2ensite contentshell.conf") or die("Unable to enable contenthell Apache site.")
+    cp("files/my.cnf", "/etc/mysql/my.cnf") or die("Unable to copy MySQL server configuration.")
+    sudo("a2enmod php7.0 proxy proxy_html rewrite") or die("Unable to enable Apache2 dependency modules.")
+    if exists("/etc/apache2/mods-available/xml2enc.load"):
+        sudo("a2enmod xml2enc") or die("Unable to enable Apache2 xml2enc module.")
+    sudo("service apache2 restart") or die("Unable to restart Apache2.")
+    return True 
+
 def exists(p):
 	return os.path.isfile(p) or os.path.isdir(p)
 
@@ -127,17 +185,50 @@ def cp(s, d):
 
 # Install the USB automounter functionality
 def install_usb_mounter():
-    sudo("apt-get install usbmount")
+    sudo("apt-get -y install usbmount") or die("Unable install usbmount.")
+    return True
     
-#=========================================================================================================
+#================================
+# Setup WiFi
+#================================
+def install_wifi():
+    sudo("apt-get -y install hostapd udhcpd") or die("Unable install hostapd and udhcpd.")
+    cp("files/udhcpd.conf", "/etc/udhcpd.conf") or die("Unable to copy UDHCPd configuration (udhcpd.conf)")
+    cp("files/udhcpd", "/etc/default/udhcpd") or die("Unable to copy UDHCPd configuration (udhcpd)")
+    cp("files/hostapd", "/etc/default/hostapd") or die("Unable to copy hostapd configuration (hostapd)")
+    cp("files/hostapd.conf", "/etc/hostapd/hostapd.conf") or die("Unable to copy hostapd configuration (hostapd.conf)")
+    sudo("sh -c 'echo 1 > /proc/sys/net/ipv4/ip_forward'") or die("Unable to set ipv4 forwarding")
+    cp("files/sysctl.conf", "/etc/sysctl.conf") or die("Unable to copy sysctl configuration (sysctl.conf)")
+    sudo("iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE") or die("Unable to set iptables MASQUERADE on eth0.")
+    sudo("iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT") or die("Unable to forward wlan0 to eth0.")
+    sudo("iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT") or die("Unable to forward wlan0 to eth0.")
+    sudo("sh -c 'iptables-save > /etc/iptables.ipv4.nat'") or die("Unable to save iptables configuration.")
+    sudo("ifconfig wlan0 10.10.10.10") or die("Unable to set wlan0 IP address (10.10.10.10)")
+    sudo("service hostapd start") or die("Unable to start hostapd service.")
+    sudo("service udhcpd start") or die("Unable to start udhcpd service.")
+    sudo("update-rc.d hostapd enable") or die("Unable to enable hostapd on boot.")
+    sudo("update-rc.d udhcpd enable") or die("Unable to enable UDHCPd on boot.")
+    # udhcpd wasn't starting properly at boot (probably starting before interface was ready)
+    # for now we we just force it to restart after setting the interface
+    sudo("sh -c 'sed -i \"s/^exit 0//\" /etc/rc.local'") or die("Unable to remove exit from end of /etc/rc.local")
+    sudo("sh -c 'echo ifconfig wlan0 10.10.10.10 >> /etc/rc.local; echo service udhcpd restart >> /etc/rc.local;'") or die("Unable to setup udhcpd reset at boot.")
+    sudo("sh -c 'echo exit 0 >> /etc/rc.local'") or die("Unable to replace exit to end of /etc/rc.local")
+    #sudo("ifdown eth0 && ifdown wlan0 && ifup eth0 && ifup wlan0") or die("Unable to restart network interfaces.")
+    return True
+
+############################################
 #    Main code start
-#=========================================================================================================
+############################################
+
+#================================
+# Get latest updates for GIT
+#================================
 sudo("apt-get update -y") or die("Unable to update.")
 sudo("apt-get install -y git") or die("Unable to install Git.")
 
-install_usb_mounter()
-
+#================================
 # Clone the GIT repo.
+#================================
 if basedir() == "/tmp/elumipi_installer":
 	sudo("rm -fr /tmp/elumipi_installer")
 	sudo("git clone --depth 1 https://github.com/rachelproject/rachelpios.git /tmp/elumipi_installer") or die("Unable to clone RACHEL installer repository.")
@@ -145,7 +236,9 @@ if basedir() == "/tmp/elumipi_installer":
 if is_vagrant():
 	sudo("mv /vagrant/sources.list /etc/apt/sources.list")
 
+#================================
 # Update and upgrade OS
+#================================
 sudo("apt-get update -y") or die("Unable to update.")
 sudo("apt-get dist-upgrade -y") or die("Unable to upgrade Raspbian.")
 
@@ -154,73 +247,46 @@ sudo("apt-get dist-upgrade -y") or die("Unable to upgrade Raspbian.")
 if not is_vagrant():
 	sudo("yes | sudo rpi-update") or die("Unable to upgrade Raspberry Pi firmware")
 
-#=========================================================================================================
-# Setup wifi hotspot
-#=========================================================================================================
-if wifi_present() and args.install_wifi:
-    #------------------------------------------------------------------------
-    # Setup HOSTAPD
-    #------------------------------------------------------------------------
-	sudo("apt-get -y install hostapd udhcpd") or die("Unable install hostapd and udhcpd.")
-	cp("files/udhcpd.conf", "/etc/udhcpd.conf") or die("Unable to copy UDHCPd configuration (udhcpd.conf)")
-	cp("files/udhcpd", "/etc/default/udhcpd") or die("Unable to copy UDHCPd configuration (udhcpd)")
-	cp("files/hostapd", "/etc/default/hostapd") or die("Unable to copy hostapd configuration (hostapd)")
-	cp("files/hostapd.conf", "/etc/hostapd/hostapd.conf") or die("Unable to copy hostapd configuration (hostapd.conf)")
-	sudo("sh -c 'echo 1 > /proc/sys/net/ipv4/ip_forward'") or die("Unable to set ipv4 forwarding")
-	cp("files/sysctl.conf", "/etc/sysctl.conf") or die("Unable to copy sysctl configuration (sysctl.conf)")
-	sudo("iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE") or die("Unable to set iptables MASQUERADE on eth0.")
-	sudo("iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT") or die("Unable to forward wlan0 to eth0.")
-	sudo("iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT") or die("Unable to forward wlan0 to eth0.")
-	sudo("sh -c 'iptables-save > /etc/iptables.ipv4.nat'") or die("Unable to save iptables configuration.")
-	sudo("ifconfig wlan0 10.10.10.10") or die("Unable to set wlan0 IP address (10.10.10.10)")
-	sudo("service hostapd start") or die("Unable to start hostapd service.")
-	sudo("service udhcpd start") or die("Unable to start udhcpd service.")
-	sudo("update-rc.d hostapd enable") or die("Unable to enable hostapd on boot.")
-	sudo("update-rc.d udhcpd enable") or die("Unable to enable UDHCPd on boot.")
-	# udhcpd wasn't starting properly at boot (probably starting before interface was ready)
-	# for now we we just force it to restart after setting the interface
-	sudo("sh -c 'sed -i \"s/^exit 0//\" /etc/rc.local'") or die("Unable to remove exit from end of /etc/rc.local")
-	sudo("sh -c 'echo ifconfig wlan0 10.10.10.10 >> /etc/rc.local; echo service udhcpd restart >> /etc/rc.local;'") or die("Unable to setup udhcpd reset at boot.")
-	sudo("sh -c 'echo exit 0 >> /etc/rc.local'") or die("Unable to replace exit to end of /etc/rc.local")
-	#sudo("ifdown eth0 && ifdown wlan0 && ifup eth0 && ifup wlan0") or die("Unable to restart network interfaces.")
+#================================
+# Install USB automounter
+#================================
+install_usb_mounter()
 
+#================================
+# Setup wifi hotspot
+#================================
+if wifi_present() and args.install_wifi:
+    install_wifi() or die("Unable to install WiFi.")
+
+#================================
 # Setup LAN
+#================================
 if not is_vagrant():
 	cp("files/interfaces", "/etc/network/interfaces") or die("Unable to copy network interface configuration (interfaces)")
 
-# Install web platform
-# MY SQL
-sudo("echo mysql-server mysql-server/root_password password " + sql_passwd + " | sudo debconf-set-selections") or die("Unable to set default MySQL password.")
-sudo("echo mysql-server mysql-server/root_password_again password " + sql_passwd + " | sudo debconf-set-selections") or die("Unable to set default MySQL password (again).")
+#================================
+# Install MY SQL 
+#================================
+sudo("echo mysql-server mysql-server/root_password password " + base_passwd + " | sudo debconf-set-selections") or die("Unable to set default MySQL password.")
+sudo("echo mysql-server mysql-server/root_password_again password " + base_passwd + " | sudo debconf-set-selections") or die("Unable to set default MySQL password (again).")
 
-# Apache2
-sudo("apt-get -y install apache2 libapache2-mod-proxy-html libxml2-dev \
-     php5-common libapache2-mod-php5 php5-cgi php5 php5-dev php-pear \
-     mysql-server mysql-client php5-mysql sqlite3 php5-sqlite") or die("Unable to install web platform.")
-sudo("yes '' | sudo pecl install -f stem") or die("Unable to install php stemmer")
-sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php5/cli/php.ini'") or die("Unable to install stemmer CLI config")
-sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php5/apache2/php.ini'") or die("Unable to install stemmer Apache config")
-sudo("sh -c 'sed -i \"s/upload_max_filesize *= *.*/upload_max_filesize = 512M/\" /etc/php5/apache2/php.ini'") or die("Unable to increase upload_max_filesize in apache2/php.ini")
-sudo("sh -c 'sed -i \"s/post_max_size *= *.*/post_max_size = 512M/\" /etc/php5/apache2/php.ini'") or die("Unable to increase post_max_size in apache2/php.ini")
-sudo("service apache2 stop") or die("Unable to stop Apache2.")
-#cp("files/apache2.conf", "/etc/apache2/apache2.conf") or die("Unable to copy Apache2.conf")
-cp("files/default", "/etc/apache2/sites-available/contentshell.conf") or die("Unable to set default Apache site.")
-sudo("a2dissite 000-default") or die("Unable to disable default Apache site.")
-sudo("a2ensite contentshell.conf") or die("Unable to enable contenthell Apache site.")
-cp("files/my.cnf", "/etc/mysql/my.cnf") or die("Unable to copy MySQL server configuration.")
-sudo("a2enmod php5 proxy proxy_html rewrite") or die("Unable to enable Apache2 dependency modules.")
-if exists("/etc/apache2/mods-available/xml2enc.load"):
-	sudo("a2enmod xml2enc") or die("Unable to enable Apache2 xml2enc module.")
-sudo("service apache2 restart") or die("Unable to restart Apache2.")
+#================================
+# Install Apache2
+#================================
+install_apache() or die("Unable to install Apache.")
 
+#================================
 # Install web frontend
+#================================
 sudo("rm -fr /var/www") or die("Unable to delete existing default web application (/var/www).")
 sudo("git clone --depth 1 https://github.com/rachelproject/contentshell /var/www") or die("Unable to download RACHEL web application.")
 sudo("chown -R www-data.www-data /var/www") or die("Unable to set permissions on RACHEL web application (/var/www).")
 sudo("sh -c \"umask 0227; echo 'www-data ALL=(ALL) NOPASSWD: /sbin/shutdown' >> /etc/sudoers.d/www-shutdown\"") or die("Unable to add www-data to sudoers for web shutdown")
 sudo("usermod -a -G adm www-data") or die("Unable to add www-data to adm group (so stats.php can read logs)")
 
+#================================
 # Extra wifi driver configuration
+#================================
 if wifi_present() and args.install_wifi:
 	cp("files/hostapd_RTL8188CUS", "/etc/hostapd/hostapd.conf.RTL8188CUS") or die("Unable to copy RTL8188CUS hostapd configuration.")
 	cp("files/hostapd_realtek.conf", "/etc/hostapd/hostapd.conf.realtek") or die("Unable to copy realtek hostapd configuration.")
@@ -228,21 +294,30 @@ if wifi_present() and args.install_wifi:
 if args.khan_academy == "ka-lite":
         install_kalite() or die("Unable to install KA-Lite.")
 
+#================================
 # install the kiwix server (but not content)
+#================================
 install_kiwix()
 
-# Change login password to rachel
+#================================
+# Change pi user login password 
+#================================
 if not is_vagrant():
-	sudo("sh -c 'echo pi:rachel | chpasswd'") or die("Unable to change 'pi' password.")
+	sudo("sh -c 'echo pi:" + base_passwd + "| chpasswd'") or die("Unable to change 'pi' password.")
 
+#================================
 # Update hostname (LAST!)
+#================================
 if not is_vagrant():
 	cp("files/hosts", "/etc/hosts") or die("Unable to copy hosts file.")
 	cp("files/hostname", "/etc/hostname") or die("Unable to copy hostname file.")
 	sudo("/etc/init.d/hostname.sh") or die("Unable to set hostname.")
 
+#================================
 # record the version of the installer we're using - this must be manually
 # updated when you tag a new installer
-sudo("sh -c 'echo piOS-2016.04.19 > /etc/rachelinstaller-version'") or die("Unable to record rachelpiOS version.")
+#================================
+sudo("sh -c 'echo " + base_build + " > /etc/elumipi-installer-version'") or die("Unable to record ELUMIPI version.")
 
-print "RACHEL has been successfully installed. It can be accessed at: http://10.10.10.10/"
+print "ELUMIPI has been successfully installed."
+print "It can be accessed at: http://" + base_ip + "/"
