@@ -30,7 +30,7 @@ This version of the ElumiPi build supports:
 `sudo reboot`
 
 5. paste in the following command after reboot.
-`curl -fsS https://raw.githubusercontent.com/rachelproject/rachelpiOS/master/installer.py | python`
+`curl -fsS https://https://github.com/elumipi/BaseBuild/ElumiP_installer.py | python`
 
 Please note that this will change the 'pi' user's password to: elumipi
 
