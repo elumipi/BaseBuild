@@ -20,11 +20,11 @@ import argparse
 #=========================================================================================================
 # Settings for build
 #=========================================================================================================
-base_user="pi"              # Default user name to use
-base_passwd="elumipi"       # Default password for all services
-base_ip_range="10.11.0"     # IP range (/24) for the WiFI interface
-base_ip="10.11.0.1"         # Default IP address for the WiFi interface
-base_build="ELUMIPI-20171022"
+base_user     = "pi"              # Default user name to use
+base_passwd   = "elumipi"       # Default password for all services
+base_ip_range = "10.11.0"     # IP range (/24) for the WiFI interface
+base_ip       = "10.11.0.1"         # Default IP address for the WiFi interface
+base_build    = "ELUMIPI-20171212"
 
 #=========================================================================================================
 # Command line arguments
