@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 #=========================================================================================================
 #    Original script from Rachel
-#    Modified for DEAN ElumiPI
+#    Modified for DEAN ElimuPI
 #
 #    Date        |By     | Desxcription
 # ---------------+-------+----------------------------------------
 #    2017-Apr-3  | PVe   | Initial fork 
 #    2017-Jun-28 | PVe   | Updated base configuration
+#    2018-Feb-28 | PVe   | Added more modular design
 #
 #=========================================================================================================
 import sys
@@ -16,15 +17,17 @@ import argparse
 import shutil
 import urllib
 import argparse
+import platform
 
 #=========================================================================================================
 # Settings for build
 #=========================================================================================================
-base_user     = "pi"              # Default user name to use
-base_passwd   = "elumipi"       # Default password for all services
-base_ip_range = "10.11.0"     # IP range (/24) for the WiFI interface
-base_ip       = "10.11.0.1"         # Default IP address for the WiFi interface
-base_build    = "ELUMIPI-20171212"
+base_user           = "pi"                  # Default user name to use
+base_passwd         = "elimupi"             # Default password for all services
+base_ip_range       = "10.11.0"             # IP range (/24) for the WiFI interface
+base_ip             = "10.11.0.1"           # Default IP address for the WiFi interface
+base_build          = "ELIMUPI-20180228"    # Date of build
+installed_modules   = [];                   # Installed modules
 
 #=========================================================================================================
 # Command line arguments
@@ -40,16 +43,20 @@ argparser.add_argument("--no-wifi",
                        help="Do not configure local wifi hotspot.")
 args = argparser.parse_args()
 
-#=========================================================================================================
+#################################
+# Installer functions
+#################################
+
+#================================
 #    USB Content management 
-#=========================================================================================================
+#================================
 def USB_automount():
     print "USB automount handling and web menu"
     return True
 
-#=========================================================================================================
+#================================
 # Kahn Acadamy content (educational)
-#=========================================================================================================
+#================================
 def install_kalite():
 	sudo("apt-get install -y python-pip") or die("Unable to install pip.")
 	sudo("pip install ka-lite-static") or die("Unable to install KA-Lite")
@@ -87,51 +94,105 @@ def install_kiwix():
 	sudo("sh -c 'echo "+kiwix_version+" >/etc/kiwix-version'") or die("Unable to record kiwix version.")
 	return True
 
-#=========================================================================================================
+#================================
 #    Citadel MAIL solutiuon 
-#=========================================================================================================
+#================================
 def install_citadel():
     print "Installing CitaDel mail solution"
     sudo("sudo apt-get install citadel-suite")
     # Installation steps
     return True
 
-#=========================================================================================================
+#================================
 # WordPress installer
-#=========================================================================================================
+#================================
 def install_wordpress():
-    sudo("cd /var/www/html/")   # check if this is OK!!!!!!
-    sudo("rm *")
-    sudo("wget http://wordpress.org/latest.tar.gz")  
-    sudo("tar xzf latest.tar.gz")
-    sudo("mv wordpress/* .")
-    sudo("rm -rf wordpress latest.tar.gz")
-    sudo("chown -R www-data: .")
-    # Setup database for WordPress
-    sudo("mysql --user=" + base_user + " --password=" + base_passwd + " <files/create_wordpress.sql" )
-    # CURL to index.php 
+    if installed_modules.index('apache'):
+        sudo("cd /var/www/html/")   # check if this is OK!!!!!!
+        sudo("rm *")
+        # sudo("wget http://wordpress.org/latest.tar.gz")
+        sudo("sh -c 'wget -O - http://wordpress.org/latest.tar.gz'") or die("Unable to download kiwix-server")  
+        sudo("tar xzf latest.tar.gz")
+        sudo("mv wordpress/* .")
+        sudo("rm -rf wordpress latest.tar.gz")
+        sudo("chown -R www-data: .")
+        # Setup database for WordPress
+        sudo("mysql --user=" + base_user + " --password=" + base_passwd + " <files/create_wordpress.sql" )
+        # CURL to index.php
+        
+        # Add caching for performance reasons
+        installed_modules.extend(['wordpress'])
+        return True
+    else:
+        return False
+
+#================================
+# PHP Installation
+#================================
+def install_php():
+    print "========================================="
+    print "Installing PHP"
+    print "========================================="
+    sudo("apt-get -y libxml2-dev") or die("Unable to install libXml2.")
+    sudo("apt-get -y php7.0") or die("Unable to install php7.0.")
+    sudo("apt-get -y php7.0-common") or die("Unable to install php7.0-common.")
+    sudo("apt-get -y libapache2-mod-php7.0") or die("Unable to install libapache2-mod-php7.0.")
+    sudo("apt-get -y php7.0-cgi") or die("Unable to install php7.0-cgi.")
+    sudo("apt-get -y php7.0-dev ") or die("Unable to install php7.0-dev.")
+    sudo("apt-get -y php-pear ") or die("Unable to install php-pear.")
+    #mysql related modules
+    sudo("apt-get -y php7.0-mysql sqlite3 php7.0-sqlite3") or die("Unable to install web platform.")
+    installed_modules.extend(['php'])
     return True
+
+#================================
+# MySQL installation
+#================================                     
+def install_mysql():
+    print "========================================="
+    print "Installing MySQL platform"
+    print "========================================="
+    sudo("apt-get -y mysql-server") or die("Unable to install mysql server.")
+    sudo("apt-get -y mysql-client") or die("Unable to install mysql client.")
+    sudo("echo mysql-server mysql-server/root_password password " + base_passwd +  " | sudo debconf-set-selections") or die("Unable to set default MySQL password.")
+    sudo("echo mysql-server mysql-server/root_password_again password " + base_passwd + " | sudo debconf-set-selections") or die("Unable to set default MySQL password (again).")
+    installed_modules.extend(['mysql'])
+    return True
+
+#================================
+# Install sqlite
+#================================
+def install_sqlite():
+    sudo("apt-get -y sqlite3") or die("Unable to install sqlite3")
+    return True 
 
 #=========================================================================================================
 # Apache installer
 #=========================================================================================================
 def install_apache():
     print "========================================="
-    print "Installing WEB platform"
+    print "Installing Apache platform"
     print "========================================="
-    sudo("apt-get -y install apache2 libxml2-dev \
-         php7.0-common libapache2-mod-php7.0 php7.0-cgi php7.0 php7.0-dev php-pear \
-         mysql-server mysql-client php7.0-mysql sqlite3 php7.0-sqlite3") or die("Unable to install web platform.")
-    # Install word stemming (transform to actual words)
+    sudo("apt-get -y install apache2 libxml2-dev") or die("Unable to install Apache.")
     
     # Fails to compile!!!!!!
     sudo("yes '' | sudo pecl install -f stem") or die("Unable to install php stemmer")
     
     # Install stemming
-    sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php7.0/cli/php.ini'") or die("Unable to install stemmer CLI config")
-    sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php7.0/apache2/php.ini'") or die("Unable to install stemmer Apache config")
-    sudo("sh -c 'sed -i \"s/upload_max_filesize *= *.*/upload_max_filesize = 512M/\" /etc/php5/apache2/php.ini'") or die("Unable to increase upload_max_filesize in apache2/php.ini")
-    sudo("sh -c 'sed -i \"s/post_max_size *= *.*/post_max_size = 512M/\" /etc/php7.0/apache2/php.ini'") or die("Unable to increase post_max_size in apache2/php.ini")
+    sudo("wget https://pecl.php.net/get/stem-1.5.1.tgz") or die("Unable to download kiwix-server")
+    sudo("tar -xvf stem-1.5.1.tgz -C stem")
+    sudo("wget -O patch.file https://bugs.php.net/patch-display.php?bug_id=71631&patch=update-for-php7&revision=1456823887&download=1")
+    sudo("patch -p1 < patch.file")
+    sudo("md5sum stem.c")
+    ## check package.xml <file md5sum="ee8c88ec8b8f06f686fcebdffe744b08" name="stem.c" role="src" />
+    
+    # add the corrected checksum
+    sudo("sed -i \"s/<file md5sum=\\\"*\\\" name=\\\"stem.c\\\" role=\\\"src\\\" \\/>/<file md5sum=\\\"ee8c88ec8b8f06f686fcebdffe744b08\\\" name=\\\"stem.c\\\" role=\\\"src\\\" \\/>/\" p.xml")
+    
+    sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php/7.0/cli/php.ini'") or die("Unable to install stemmer CLI config")
+    sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php/7.0/apache2/php.ini'") or die("Unable to install stemmer Apache config")
+    sudo("sh -c 'sed -i \"s/upload_max_filesize *= *.*/upload_max_filesize = 512M/\" /etc/php/7.0/apache2/php.ini'") or die("Unable to increase upload_max_filesize in apache2/php.ini")
+    sudo("sh -c 'sed -i \"s/post_max_size *= *.*/post_max_size = 512M/\" /etc/php/7.0/apache2/php.ini'") or die("Unable to increase post_max_size in apache2/php.ini")
     sudo("service apache2 stop") or die("Unable to stop Apache2.")
     
     #cp("files/apache2.conf", "/etc/apache2/apache2.conf") or die("Unable to copy Apache2.conf")
@@ -143,11 +204,32 @@ def install_apache():
     if exists("/etc/apache2/mods-available/xml2enc.load"):
         sudo("a2enmod xml2enc") or die("Unable to enable Apache2 xml2enc module.")
     sudo("service apache2 restart") or die("Unable to restart Apache2.")
+    installed_modules.extend(['apache'])
     return True 
 
+#################################
+# Support functions
+#################################
+#================================
+# Check if file exists
+#================================
+def yes_or_no(question):
+    while "the answer is invalid":
+        reply = str(raw_input(question+' (y/n): ')).lower().strip()
+        if reply[0] == 'y':
+            return True
+        if reply[0] == 'n':
+            return False
+        
+#================================
+# Check if file exists
+#================================
 def exists(p):
 	return os.path.isfile(p) or os.path.isdir(p)
 
+#================================
+# cmd run
+#================================
 def cmd(c):
 	result = subprocess.Popen(c, shell=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 	try:
@@ -156,21 +238,28 @@ def cmd(c):
 		pass
 	return (result.returncode == 0)
 
+#================================
+# run command via sudo
+#================================
 def sudo(s):
 	return cmd("sudo DEBIAN_FRONTEND=noninteractive %s" % s)
 
+#================================
+# Exit installer script
+#================================
 def die(d):
 	print "Error: " + str(d)
 	sys.exit(1)
 
+#================================
+# check if is virtual environment 
+#================================
 def is_vagrant():
 	return os.path.isfile("/etc/is_vagrant_vm")
 
-def wifi_present():
-	if is_vagrant():
-		return False
-	return exists("/sys/class/net/wlan0")
-
+#================================
+# basedir
+#================================
 def basedir():
 	bindir = os.path.dirname(sys.argv[0])
 	if not bindir:
@@ -180,6 +269,9 @@ def basedir():
 	else:
 		return "/tmp/elumipi_installer"
 	
+#================================
+# Copy command
+#================================    
 def cp(s, d):
 	return sudo("cp %s/%s %s" % (basedir(), s, d))
 
@@ -187,13 +279,19 @@ def cp(s, d):
 def install_usb_mounter():
     sudo("apt-get -y install usbmount") or die("Unable install usbmount.")
     return True
-    
+
+# Check if we have a WiFi device
+def wifi_present():
+    if is_vagrant():
+        return False
+    return exists("/sys/class/net/wlan0")
+
 #================================
 # Setup WiFi
 #================================
 def install_wifi():
     sudo("apt-get -y install hostapd udhcpd") or die("Unable install hostapd and udhcpd.")
-    cp("files/udhcpd.conf", "/etc/udhcpd.conf") or die("Unable to copy UDHCPd configuration (udhcpd.conf)")
+    cp("files/udhcpd.conf", "/etc/udhcpd.conf") or die("Unable to copy uDHCPd configuration (udhcpd.conf)")
     cp("files/udhcpd", "/etc/default/udhcpd") or die("Unable to copy UDHCPd configuration (udhcpd)")
     cp("files/hostapd", "/etc/default/hostapd") or die("Unable to copy hostapd configuration (hostapd)")
     cp("files/hostapd.conf", "/etc/hostapd/hostapd.conf") or die("Unable to copy hostapd configuration (hostapd.conf)")
@@ -219,38 +317,100 @@ def install_wifi():
 ############################################
 #    Main code start
 ############################################
-
-#================================
-# Get latest updates for GIT
-#================================
-sudo("apt-get update -y") or die("Unable to update.")
-sudo("apt-get install -y git") or die("Unable to install Git.")
+print '--------------------------------------------------------------------------'
+print 'Platform : ' + platform.platform()   # Platform : Linux-4.9.41-v7+-armv7l-with-debian-9.1
+print 'System   : ' + platform.system()     # System   : Linux
+print 'Release  : ' + platform.release()    # Release  : 4.9.41-v7+
+print 'Version  : ' + platform.version()    # Version  : #1023 SMP Tue Aug 8 16:00:15 BST 2017
+print '--------------------------------------------------------------------------'
+if os.path.isfile(base_build + '_install'):
+    print "Continue install after reboot"
+    # get phase
+    install_phase = open(base_build + '_install').read()
+    print "Install phase: " + install_phase 
+else: 
+    install_phase = 0  
+    if not yes_or_no("Do you want to install the ElimuPi build"):
+        die('Installation aborted')
+        
+    #================================
+    # Check if on Linux and debian (requirement for ElimuPi)
+    #================================
+    if platform.system() != 'Linux': 
+        die('Incorrect OS [' + platform.system() + ']')
+    
+    if platform.linux_distribution().index('debian'):
+        die('Incorrect distribution [' + platform.linux_distribution() + ']')
+    
+    #================================
+    # Get latest updates 
+    #================================
+    sudo("apt-get update -y") or die("Unable to update.")
+    
+    #================================
+    # Get latest GIT
+    #================================
+    sudo("apt-get install -y git") or die("Unable to install Git.")
+    
+    #================================
+    # Vargrant
+    #================================
+    if is_vagrant():
+    	sudo("mv /vagrant/sources.list /etc/apt/sources.list")
+    
+    #================================
+    # Update and upgrade OS
+    #================================
+    sudo("apt-get update -y") or die("Unable to update.")
+    sudo("apt-get dist-upgrade -y") or die("Unable to upgrade Raspbian.")
+    
+    #================================
+    # Write install status to file
+    #================================
+    file = open(base_build + '_install', 'w')
+    file.write('1')                                                     # Write phase to file
+    file.close()
+    
+    #================================
+    # Make installer autorun
+    #================================
+    if not '/tmp/elumipi_installer/ElimuPi_installer.py' in open('.bashrc').read():
+        # Add to startup
+        file = open('.bashrc', 'a')
+        file.write('/tmp/elumipi_installer/ElimuPi_installer.py')       # Enable autostart on logon
+        file.close()
+        print "Autostart enabled"
+        
+    #================================
+    # Reboot
+    #================================
+    print "---------------------------------------------------------"    
+    print "Rebooting sytem required to enable all updates"
+    print "Press enter to reboot"
+    print "---------------------------------------------------------"
+    raw_input('')
+    sudo("reboot") or die("Unable to reboot Raspbian.")
 
 #================================
 # Clone the GIT repo.
 #================================
 if basedir() == "/tmp/elumipi_installer":
-	sudo("rm -fr /tmp/elumipi_installer")
-	sudo("git clone --depth 1 https://github.com/rachelproject/rachelpios.git /tmp/elumipi_installer") or die("Unable to clone RACHEL installer repository.")
-
-if is_vagrant():
-	sudo("mv /vagrant/sources.list /etc/apt/sources.list")
-
+    print "Fetching files from GIT"
+    sudo("rm -fr /tmp/elumipi_installer")  
+    sudo("git clone --depth 1 https://github.com/elumipi/BaseBuild.git /tmp/elumipi_installer") or die("Unable to clone RACHEL installer repository.")
+else:
+    print "Using local files "
+    
 #================================
-# Update and upgrade OS
-#================================
-sudo("apt-get update -y") or die("Unable to update.")
-sudo("apt-get dist-upgrade -y") or die("Unable to upgrade Raspbian.")
-
-
 # Update Raspi firmware
+#================================
 if not is_vagrant():
 	sudo("yes | sudo rpi-update") or die("Unable to upgrade Raspberry Pi firmware")
 
 #================================
 # Install USB automounter
 #================================
-install_usb_mounter()
+install_usb_mounter() or die("Unable to install automounter.")
 
 #================================
 # Setup wifi hotspot
@@ -265,32 +425,34 @@ if not is_vagrant():
 	cp("files/interfaces", "/etc/network/interfaces") or die("Unable to copy network interface configuration (interfaces)")
 
 #================================
-# Install MY SQL 
-#================================
-sudo("echo mysql-server mysql-server/root_password password " + base_passwd + " | sudo debconf-set-selections") or die("Unable to set default MySQL password.")
-sudo("echo mysql-server mysql-server/root_password_again password " + base_passwd + " | sudo debconf-set-selections") or die("Unable to set default MySQL password (again).")
-
-#================================
-# Install Apache2
-#================================
-install_apache() or die("Unable to install Apache.")
-
-#================================
-# Install web frontend
-#================================
-sudo("rm -fr /var/www") or die("Unable to delete existing default web application (/var/www).")
-sudo("git clone --depth 1 https://github.com/rachelproject/contentshell /var/www") or die("Unable to download RACHEL web application.")
-sudo("chown -R www-data.www-data /var/www") or die("Unable to set permissions on RACHEL web application (/var/www).")
-sudo("sh -c \"umask 0227; echo 'www-data ALL=(ALL) NOPASSWD: /sbin/shutdown' >> /etc/sudoers.d/www-shutdown\"") or die("Unable to add www-data to sudoers for web shutdown")
-sudo("usermod -a -G adm www-data") or die("Unable to add www-data to adm group (so stats.php can read logs)")
-
-#================================
 # Extra wifi driver configuration
 #================================
 if wifi_present() and args.install_wifi:
-	cp("files/hostapd_RTL8188CUS", "/etc/hostapd/hostapd.conf.RTL8188CUS") or die("Unable to copy RTL8188CUS hostapd configuration.")
-	cp("files/hostapd_realtek.conf", "/etc/hostapd/hostapd.conf.realtek") or die("Unable to copy realtek hostapd configuration.")
+    cp("files/hostapd_RTL8188CUS", "/etc/hostapd/hostapd.conf.RTL8188CUS") or die("Unable to copy RTL8188CUS hostapd configuration.")
+    cp("files/hostapd_realtek.conf", "/etc/hostapd/hostapd.conf.realtek") or die("Unable to copy realtek hostapd configuration.")
+    
 
+#================================
+# Install components 
+#================================
+install_apache() or die("Unable to install Apache.")
+install_mysql() or die("Unable to install mysql.")
+install_sqlite() or die("Unable to install sqlite.")
+install_php() or die("Unable to install php.")
+install_citadel() or die("Unable to install Citadel.")
+
+#================================
+# Install web frontend (For now Rachel!!!)
+#================================
+#sudo("rm -fr /var/www") or die("Unable to delete existing default web application (/var/www).")
+#sudo("git clone --depth 1 https://github.com/rachelproject/contentshell /var/www") or die("Unable to download RACHEL web application.")
+#sudo("chown -R www-data.www-data /var/www") or die("Unable to set permissions on RACHEL web application (/var/www).")
+#sudo("sh -c \"umask 0227; echo 'www-data ALL=(ALL) NOPASSWD: /sbin/shutdown' >> /etc/sudoers.d/www-shutdown\"") or die("Unable to add www-data to sudoers for web shutdown")
+#sudo("usermod -a -G adm www-data") or die("Unable to add www-data to adm group (so stats.php can read logs)")
+
+#================================
+# KAHN academy (optional)
+#================================
 if args.khan_academy == "ka-lite":
         install_kalite() or die("Unable to install KA-Lite.")
 
@@ -317,7 +479,10 @@ if not is_vagrant():
 # record the version of the installer we're using - this must be manually
 # updated when you tag a new installer
 #================================
-sudo("sh -c 'echo " + base_build + " > /etc/elumipi-installer-version'") or die("Unable to record ELUMIPI version.")
+sudo("sh -c 'echo " + base_build + " > /etc/elimupi-installer-version'") or die("Unable to record ELIMUPI version.")
 
-print "ELUMIPI has been successfully installed."
+#================================
+# Final messages
+#================================
+print "ELIMUPI image has been successfully created."
 print "It can be accessed at: http://" + base_ip + "/"
