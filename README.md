@@ -7,6 +7,8 @@ Please visit http://www.dean.ngo/ict4e/digital-classroom-box-elimupi/ for more i
 
 ## Introduction
 THIS IS WORK IN PROGRESS: DO NOT USE!!!!
+-- All code will be ported to Python --  
+
 
 ## Functions
 This version of the ElumiPi build supports:
@@ -33,7 +35,10 @@ This version of the ElumiPi build supports:
 
 6. paste in the following command after reboot.
 `curl -fsS https://raw.githubusercontent.com/elumipi/BaseBuild/master/ElumiPi_installer.py | python`
- 
+
+Test script: `curl -fsS https://10.1.1.74:8080/ElimuPi/ElimuPi_installer.py | python`
+
+`wget http://10.1.1.74:8080/ElimuPi/ElimuPi_installer.py && chmod 700 ElimuPi_installer.py && ./ElimuPi_installer.py` 
 
 Please note that this will change the 'pi' user's password to: elumipi
 

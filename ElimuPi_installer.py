@@ -133,15 +133,13 @@ def install_php():
     print "========================================="
     print "Installing PHP"
     print "========================================="
-    sudo("apt-get -y libxml2-dev") or die("Unable to install libXml2.")
-    sudo("apt-get -y php7.0") or die("Unable to install php7.0.")
-    sudo("apt-get -y php7.0-common") or die("Unable to install php7.0-common.")
-    sudo("apt-get -y libapache2-mod-php7.0") or die("Unable to install libapache2-mod-php7.0.")
-    sudo("apt-get -y php7.0-cgi") or die("Unable to install php7.0-cgi.")
-    sudo("apt-get -y php7.0-dev ") or die("Unable to install php7.0-dev.")
-    sudo("apt-get -y php-pear ") or die("Unable to install php-pear.")
+    sudo("sudo apt-get -y install libxml2-dev") or die("Unable to install libXml2.")
+    sudo("sudo apt-get -y install php7.0") or die("Unable to install php7.0.")
+    sudo("sudo apt-get -y install php7.0-common") or die("Unable to install php7.0-common.")
+    sudo("sudo apt-get -y install php7.0-dev ") or die("Unable to install php7.0-dev.")
+    sudo("sudo apt-get -y install php-pear ") or die("Unable to install php-pear.")
     #mysql related modules
-    sudo("apt-get -y php7.0-mysql sqlite3 php7.0-sqlite3") or die("Unable to install web platform.")
+    sudo("sudo apt-get -y install php7.0-mysql sqlite3 php7.0-sqlite3") or die("Unable to install web platform.")
     installed_modules.extend(['php'])
     return True
 
@@ -152,10 +150,10 @@ def install_mysql():
     print "========================================="
     print "Installing MySQL platform"
     print "========================================="
-    sudo("apt-get -y mysql-server") or die("Unable to install mysql server.")
-    sudo("apt-get -y mysql-client") or die("Unable to install mysql client.")
-    sudo("echo mysql-server mysql-server/root_password password " + base_passwd +  " | sudo debconf-set-selections") or die("Unable to set default MySQL password.")
-    sudo("echo mysql-server mysql-server/root_password_again password " + base_passwd + " | sudo debconf-set-selections") or die("Unable to set default MySQL password (again).")
+    sudo("sudo apt-get -y install mysql-server") or die("Unable to install mysql server.")
+    sudo("sudo apt-get -y install mysql-client") or die("Unable to install mysql client.")
+    sudo("sudo echo mysql-server mysql-server/root_password password " + base_passwd +  " | sudo debconf-set-selections") or die("Unable to set default MySQL password.")
+    sudo("sudo echo mysql-server mysql-server/root_password_again password " + base_passwd + " | sudo debconf-set-selections") or die("Unable to set default MySQL password (again).")
     installed_modules.extend(['mysql'])
     return True
 
@@ -163,7 +161,7 @@ def install_mysql():
 # Install sqlite
 #================================
 def install_sqlite():
-    sudo("apt-get -y sqlite3") or die("Unable to install sqlite3")
+    sudo("sudo apt-get -y sqlite3") or die("Unable to install sqlite3")
     return True 
 
 #=========================================================================================================
@@ -173,7 +171,10 @@ def install_apache():
     print "========================================="
     print "Installing Apache platform"
     print "========================================="
-    sudo("apt-get -y install apache2 libxml2-dev") or die("Unable to install Apache.")
+    sudo("sudo apt-get -y install apache2 libxml2-dev") or die("Unable to install Apache.")
+    sudo("sudo apt-get -y install libapache2-mod-php7.0") or die("Unable to install libapache2-mod-php7.0.")
+    sudo("sudo apt-get -y install php7.0-cgi") or die("Unable to install php7.0-cgi.")
+    
     
     # Fails to compile!!!!!!
     sudo("yes '' | sudo pecl install -f stem") or die("Unable to install php stemmer")
@@ -435,10 +436,10 @@ if wifi_present() and args.install_wifi:
 #================================
 # Install components 
 #================================
+install_php() or die("Unable to install php.")
 install_apache() or die("Unable to install Apache.")
 install_mysql() or die("Unable to install mysql.")
 install_sqlite() or die("Unable to install sqlite.")
-install_php() or die("Unable to install php.")
 install_citadel() or die("Unable to install Citadel.")
 
 #================================
