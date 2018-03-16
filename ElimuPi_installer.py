@@ -72,7 +72,7 @@ def install_kalite():
     if exists("/etc/systemd"):
         sudo("mkdir -p /etc/systemd/system/ka-lite.service.d") or die("Unable to create KA-Lite service options directory.")
         cp("files/init-systemd-conf", "/etc/systemd/system/ka-lite.service.d/10-extend-timeout.conf") or die("Unable to increase KA-Lite service startup timeout.")
-     sudo("update-rc.d ka-lite defaults") or die("Unable to register the KA-Lite service.")
+    sudo("update-rc.d ka-lite defaults") or die("Unable to register the KA-Lite service.")
 
     ##  PBo 20180313-06 Start with systemctl < sudo("service ka-lite start") or die("Unable to start the KA-Lite service.")
     sudo("systemctl restart ka-lite") or die("Unable to start the KA-Lite service.")
@@ -279,14 +279,16 @@ def is_vagrant():
 # basedir
 #================================
 def basedir():
-    bindir = os.path.dirname(sys.argv[0])
+    bindir = os.path.dirname(os.path.realpath(sys.argv[0]))     # Should be initial folder where install is started 
+    print 'Install  : ' + bindir 
     if not bindir:
         bindir = "."
-    if exists(bindir + "/files"):
+    if exists(bindir + "/files"):                   # Started from local fileset
         return bindir
     else:
-        return "/tmp/elimupi_installer"
-    
+        return bindir + "/elimupi_installer"        # Started from GIT
+
+
 #================================
 # Copy command
 #================================    
@@ -392,10 +394,10 @@ else:
     #================================
     # Make installer autorun
     #================================
-    if not '/tmp/elimupi_installer/ElimuPi_installer.py' in open('.bashrc').read():
+    if not basedir() + '/ElimuPi_installer.py' in open('.bashrc').read():
         # Add to startup
         file = open('.bashrc', 'a')
-        file.write('/tmp/elimupi_installer/ElimuPi_installer.py')       # Enable autostart on logon
+        file.write( basedir() + '/ElimuPi_installer.py')       # Enable autostart on logon
         file.close()
         print "Autostart enabled"
 
@@ -417,7 +419,7 @@ else:
 #================================
 # Clone the GIT repo.
 #================================
-if basedir() == "/tmp/elimupi_installer":
+if basedir()[-17:] == "elimupi_installer":       # check if GIT install
     print "Fetching files from GIT"
     sudo("rm -fr /tmp/elimupi_installer")  
     # NOTE GIT is still old name; needs rebranding
