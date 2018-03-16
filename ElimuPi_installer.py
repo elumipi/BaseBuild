@@ -72,12 +72,12 @@ def install_kalite():
     if exists("/etc/systemd"):
         sudo("mkdir -p /etc/systemd/system/ka-lite.service.d") or die("Unable to create KA-Lite service options directory.")
         cp("files/init-systemd-conf", "/etc/systemd/system/ka-lite.service.d/10-extend-timeout.conf") or die("Unable to increase KA-Lite service startup timeout.")
- 	sudo("update-rc.d ka-lite defaults") or die("Unable to register the KA-Lite service.")
+     sudo("update-rc.d ka-lite defaults") or die("Unable to register the KA-Lite service.")
 
-	##  PBo 20180313-06 Start with systemctl < sudo("service ka-lite start") or die("Unable to start the KA-Lite service.")
-	sudo("systemctl restart ka-lite") or die("Unable to start the KA-Lite service.")
-	sudo("sh -c '/usr/local/bin/kalite --version > /etc/kalite-version'") or die("Unable to record kalite version")
-	return True
+    ##  PBo 20180313-06 Start with systemctl < sudo("service ka-lite start") or die("Unable to start the KA-Lite service.")
+    sudo("systemctl restart ka-lite") or die("Unable to start the KA-Lite service.")
+    sudo("sh -c '/usr/local/bin/kalite --version > /etc/kalite-version'") or die("Unable to record kalite version")
+    return True
 
 #=========================================================================================================
 #    KIWIX WiKi Offline 
@@ -243,55 +243,55 @@ def yes_or_no(question):
 # Check if file exists
 #================================
 def exists(p):
-	return os.path.isfile(p) or os.path.isdir(p)
+    return os.path.isfile(p) or os.path.isdir(p)
 
 #================================
 # cmd run
 #================================
 def cmd(c):
-	result = subprocess.Popen(c, shell=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-	try:
-		result.communicate()
-	except KeyboardInterrupt:
-		pass
-	return (result.returncode == 0)
+    result = subprocess.Popen(c, shell=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+    try:
+        result.communicate()
+    except KeyboardInterrupt:
+        pass
+    return (result.returncode == 0)
 
 #================================
 # run command via sudo
 #================================
 def sudo(s):
-	return cmd("sudo DEBIAN_FRONTEND=noninteractive %s" % s)
+    return cmd("sudo DEBIAN_FRONTEND=noninteractive %s" % s)
 
 #================================
 # Exit installer script
 #================================
 def die(d):
-	print "Error: " + str(d)
-	sys.exit(1)
+    print "Error: " + str(d)
+    sys.exit(1)
 
 #================================
 # check if is virtual environment 
 #================================
 def is_vagrant():
-	return os.path.isfile("/etc/is_vagrant_vm")
+    return os.path.isfile("/etc/is_vagrant_vm")
 
 #================================
 # basedir
 #================================
 def basedir():
-	bindir = os.path.dirname(sys.argv[0])
-	if not bindir:
-		bindir = "."
-	if exists(bindir + "/files"):
-		return bindir
-	else:
-		return "/tmp/elimupi_installer"
-	
+    bindir = os.path.dirname(sys.argv[0])
+    if not bindir:
+        bindir = "."
+    if exists(bindir + "/files"):
+        return bindir
+    else:
+        return "/tmp/elimupi_installer"
+    
 #================================
 # Copy command
 #================================    
 def cp(s, d):
-	return sudo("cp %s/%s %s" % (basedir(), s, d))
+    return sudo("cp %s/%s %s" % (basedir(), s, d))
 
 # Install the USB automounter functionality
 def install_usb_mounter():
@@ -374,7 +374,7 @@ else:
     # Vargrant
     #================================
     if is_vagrant():
-    	sudo("mv /vagrant/sources.list /etc/apt/sources.list")
+        sudo("mv /vagrant/sources.list /etc/apt/sources.list")
     
     #================================
     # Update and upgrade OS
@@ -429,7 +429,7 @@ else:
 # Update Raspi firmware
 #================================
 if not is_vagrant():
-	sudo("yes | sudo rpi-update") or die("Unable to upgrade Raspberry Pi firmware")
+    sudo("yes | sudo rpi-update") or die("Unable to upgrade Raspberry Pi firmware")
 
 #================================
 # Install USB automounter
@@ -446,7 +446,7 @@ if wifi_present() and args.install_wifi:
 # Setup LAN
 #================================
 if not is_vagrant():
-	cp("files/interfaces", "/etc/network/interfaces") or die("Unable to copy network interface configuration (interfaces)")
+    cp("files/interfaces", "/etc/network/interfaces") or die("Unable to copy network interface configuration (interfaces)")
 
 #================================
 # Extra wifi driver configuration
@@ -489,14 +489,14 @@ install_kiwix()
 # Change pi user login password 
 #================================
 if not is_vagrant():
-	sudo("sh -c 'echo pi:" + base_passwd + "| chpasswd'") or die("Unable to change 'pi' password.")
+    sudo("sh -c 'echo pi:" + base_passwd + "| chpasswd'") or die("Unable to change 'pi' password.")
 
 #================================
 # Update hostname (LAST!)
 #================================
 if not is_vagrant():
-	cp("files/hosts", "/etc/hosts") or die("Unable to copy hosts file.")
-	cp("files/hostname", "/etc/hostname") or die("Unable to copy hostname file.")
+    cp("files/hosts", "/etc/hosts") or die("Unable to copy hosts file.")
+    cp("files/hostname", "/etc/hostname") or die("Unable to copy hostname file.")
 
 #================================
 # record the version of the installer we're using - this must be manually
