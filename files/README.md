@@ -1,4 +1,4 @@
-ElumiPi OS
+ElimuPi OS
 ==========
 
-All raspberry pi configuration files for ElumiPi 
+All raspberry pi configuration files for ElimuPi 

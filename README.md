@@ -1,4 +1,4 @@
-# ElumiPi BaseBuild
+# ElimuPi BaseBuild
 This is a fork of the Rachel image builder adapted for DEAN. 
 
 Purpose is to provide a classroom environment for educational project in Tanzania and Kenia. Its purpose it to provide full Android tablet support without any direct internet connectivity.
@@ -11,10 +11,10 @@ THIS IS WORK IN PROGRESS: DO NOT USE!!!!
 
 
 ## Functions
-This version of the ElumiPi build supports:
+This version of the ElimuPi build supports:
 - Secured WiFi access point
 - Local DHCP, DNS
-- Android FDROID application store
+- FDROID Android application store
 - Web pages for management of the sytem and content management (WordPress)
 - WiKiPedia alike functions (KiWix)
 - Mail and calender functionality (Citadel)
@@ -34,15 +34,15 @@ This version of the ElumiPi build supports:
 `sudo reboot`
 
 6. paste in the following command after reboot.
-`curl -fsS https://raw.githubusercontent.com/elumipi/BaseBuild/master/ElumiPi_installer.py | python`
+`curl -fsS https://raw.githubusercontent.com/elumipi/BaseBuild/master/ElimuPi_installer.py | python`
 
 Test script: `curl -fsS https://10.1.1.74:8080/ElimuPi/ElimuPi_installer.py | python`
 
 `wget http://10.1.1.74:8080/ElimuPi/ElimuPi_installer.py && chmod 700 ElimuPi_installer.py && ./ElimuPi_installer.py` 
 
-Please note that this will change the 'pi' user's password to: elumipi
+Please note that this will change the 'pi' user's password to: elimupi
 
-All default username and passwords will be elumipi/elumipi unless noted differently.
+All default username and passwords will be elimupi/elimupi unless noted differently.
 
 *NOTE1: This install is tested to work with `2017-09-07-raspbian-stretch-lite` 
 

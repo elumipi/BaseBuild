@@ -8,6 +8,7 @@
 #    2017-Apr-3  | PVe   | Initial fork 
 #    2017-Jun-28 | PVe   | Updated base configuration
 #    2018-Feb-28 | PVe   | Added more modular design
+#    2018-Mar-15 | PBo   | Bug fixes
 #
 #=========================================================================================================
 import sys
@@ -26,7 +27,7 @@ base_user           = "pi"                  # Default user name to use
 base_passwd         = "elimupi"             # Default password for all services
 base_ip_range       = "10.11.0"             # IP range (/24) for the WiFI interface
 base_ip             = "10.11.0.1"           # Default IP address for the WiFi interface
-base_build          = "ELIMUPI-20180228"    # Date of build
+base_build          = "ELIMUPI-20180315"    # Date of build
 installed_modules   = [];                   # Installed modules
 
 #=========================================================================================================
@@ -59,18 +60,24 @@ def USB_automount():
 #================================
 def install_kalite():
 	sudo("apt-get install -y python-pip") or die("Unable to install pip.")
-	sudo("pip install ka-lite-static") or die("Unable to install KA-Lite")
-	sudo("printf '\nyes\nyes\nno\n' | sudo kalite manage setup --username=rachel --password=rachel --hostname=rachel --description=rachel")
+	##  PBo 20180313-06 Add --no-cache-dir qualifier sudo("pip install ka-lite-static") or die("Unable to install KA-Lite")
+        sudo("pip install --no-cache-dir ka-lite-static") or die("Unable to install KA-Lite")
+
+ 	### PBo 20180315 Removed unwanted confirmation  sudo("printf '\nyes\nyes\nno\n' | sudo kalite manage setup --username=rachel --password=rachel --hostname=rachel --description=rachel")
+ 	sudo("kalite manage setup --username=rachel --password=rachel --hostname=rachel --description=rachel")
+
 	sudo("mkdir -p /etc/ka-lite") or die("Unable to create /etc/ka-lite configuration directory.")
-	cp("files/init-functions", "/etc/default/ka-lite") or die("Unable to install KA-Lite configuration script.")
-	cp("files/init-service", "/etc/init.d/ka-lite") or die("Unable to install KA-Lite service.")
-	sudo("chmod +x /etc/init.d/ka-lite") or die("Unable to set permissions on KA-Lite service.")
-	sudo("sh -c 'echo root >/etc/ka-lite/username'") or die("Unable to configure the userid of the KA-Lite process.")
-	if exists("/etc/systemd"):
-		sudo("mkdir -p /etc/systemd/system/ka-lite.service.d") or die("Unable to create KA-Lite service options directory.")
-		cp("files/init-systemd-conf", "/etc/systemd/system/ka-lite.service.d/10-extend-timeout.conf") or die("Unable to increase KA-Lite service startup timeout.")
-	sudo("update-rc.d ka-lite defaults") or die("Unable to register the KA-Lite service.")
-	sudo("service ka-lite start") or die("Unable to start the KA-Lite service.")
+ 	cp("files/init-functions", "/etc/default/ka-lite") or die("Unable to install KA-Lite configuration script.")
+ 	cp("files/init-service", "/etc/init.d/ka-lite") or die("Unable to install KA-Lite service.")
+ 	sudo("chmod +x /etc/init.d/ka-lite") or die("Unable to set permissions on KA-Lite service.")
+ 	sudo("sh -c 'echo root >/etc/ka-lite/username'") or die("Unable to configure the userid of the KA-Lite process.")
+ 	if exists("/etc/systemd"):
+ 		sudo("mkdir -p /etc/systemd/system/ka-lite.service.d") or die("Unable to create KA-Lite service options directory.")
+ 		cp("files/init-systemd-conf", "/etc/systemd/system/ka-lite.service.d/10-extend-timeout.conf") or die("Unable to increase KA-Lite service startup timeout.")
+ 	sudo("update-rc.d ka-lite defaults") or die("Unable to register the KA-Lite service.")
+
+	##  PBo 20180313-06 Start with systemctl < sudo("service ka-lite start") or die("Unable to start the KA-Lite service.")
+	sudo("systemctl restart ka-lite") or die("Unable to start the KA-Lite service.")
 	sudo("sh -c '/usr/local/bin/kalite --version > /etc/kalite-version'") or die("Unable to record kalite version")
 	return True
 
@@ -90,7 +97,14 @@ def install_kiwix():
 	cp("files/init-kiwix-service", "/etc/init.d/kiwix") or die("Unable to install kiwix service")
 	sudo("chmod +x /etc/init.d/kiwix") or die("Unable to set permissions on kiwix service.")
 	sudo("update-rc.d kiwix defaults") or die("Unable to register the kiwix service.")
-	sudo("service kiwix start") or die("Unable to start the kiwix service.")
+
+        ## PBo 20180312-07
+        sudo ("sed -i 's/rachel-kiwix-start.pl/dean-kiwix-start.pl/g' /etc/init.d/kiwix") or die("Unable to change /etc/init.d/kiwix")
+	sudo ("systemctl daemon-reload") or die("systemctl daemon reload failed")
+	sudo ("systemctl start kiwix") or die("Unable to start the kiwix service")
+
+	## PBo 20180312-07 sudo("service kiwix start") or die("Unable to start the kiwix service.")
+
 	sudo("sh -c 'echo "+kiwix_version+" >/etc/kiwix-version'") or die("Unable to record kiwix version.")
 	return True
 
@@ -99,7 +113,8 @@ def install_kiwix():
 #================================
 def install_citadel():
     print "Installing CitaDel mail solution"
-    sudo("sudo apt-get install citadel-suite")
+    ## PBo 20180313 Install with -y < sudo("sudo apt-get install citadel-suite")
+    sudo("sudo apt-get install -y citadel-suite")
     # Installation steps
     return True
 
@@ -155,13 +170,18 @@ def install_mysql():
     sudo("sudo echo mysql-server mysql-server/root_password password " + base_passwd +  " | sudo debconf-set-selections") or die("Unable to set default MySQL password.")
     sudo("sudo echo mysql-server mysql-server/root_password_again password " + base_passwd + " | sudo debconf-set-selections") or die("Unable to set default MySQL password (again).")
     installed_modules.extend(['mysql'])
+
+    ## PBo 20180313-02 From install_apache
+    cp("files/my.cnf", "/etc/mysql/my.cnf") or die("Unable to copy MySQL server configuration.")
+
     return True
 
 #================================
 # Install sqlite
 #================================
 def install_sqlite():
-    sudo("sudo apt-get -y sqlite3") or die("Unable to install sqlite3")
+    ## PBo 20180313-04<    sudo("sudo apt-get -y sqlite3") or die("Unable to install sqlite3")
+    sudo("sudo apt-get install -y sqlite3") or die("Unable to install sqlite3")
     return True 
 
 #=========================================================================================================
@@ -169,7 +189,7 @@ def install_sqlite():
 #=========================================================================================================
 def install_apache():
     print "========================================="
-    print "Installing Apache platform"
+    print "Installing Apache platform run #3 (PBo) "
     print "========================================="
     sudo("sudo apt-get -y install apache2 libxml2-dev") or die("Unable to install Apache.")
     sudo("sudo apt-get -y install libapache2-mod-php7.0") or die("Unable to install libapache2-mod-php7.0.")
@@ -200,7 +220,9 @@ def install_apache():
     cp("files/default", "/etc/apache2/sites-available/contentshell.conf") or die("Unable to set default Apache site.")
     sudo("a2dissite 000-default") or die("Unable to disable default Apache site.")
     sudo("a2ensite contentshell.conf") or die("Unable to enable contenthell Apache site.")
-    cp("files/my.cnf", "/etc/mysql/my.cnf") or die("Unable to copy MySQL server configuration.")
+
+    ## PBo 20180313-02 No /etc/mysql folder here, moved to install_mysqql<    cp("files/my.cnf", "/etc/mysql/my.cnf") or die("Unable to copy MySQL server configuration.")
+
     sudo("a2enmod php7.0 proxy proxy_html rewrite") or die("Unable to enable Apache2 dependency modules.")
     if exists("/etc/apache2/mods-available/xml2enc.load"):
         sudo("a2enmod xml2enc") or die("Unable to enable Apache2 xml2enc module.")
@@ -268,7 +290,7 @@ def basedir():
 	if exists(bindir + "/files"):
 		return bindir
 	else:
-		return "/tmp/elumipi_installer"
+		return "/tmp/elimupi_installer"
 	
 #================================
 # Copy command
@@ -375,12 +397,17 @@ else:
     #================================
     # Make installer autorun
     #================================
-    if not '/tmp/elumipi_installer/ElimuPi_installer.py' in open('.bashrc').read():
+    if not '/tmp/elimupi_installer/ElimuPi_installer.py' in open('.bashrc').read():
         # Add to startup
         file = open('.bashrc', 'a')
-        file.write('/tmp/elumipi_installer/ElimuPi_installer.py')       # Enable autostart on logon
+        file.write('/tmp/elimupi_installer/ElimuPi_installer.py')       # Enable autostart on logon
         file.close()
         print "Autostart enabled"
+
+    #================================
+    # Fix 'strange behaviour in vim (PBo 20180315)
+    #================================
+    sudo("sed -i  's/set compatible/set nocompatible/g' /etc/vim/vimrc.tiny") or die("Unable to fix vimrc.tiny")
         
     #================================
     # Reboot
@@ -395,10 +422,11 @@ else:
 #================================
 # Clone the GIT repo.
 #================================
-if basedir() == "/tmp/elumipi_installer":
+if basedir() == "/tmp/elimupi_installer":
     print "Fetching files from GIT"
-    sudo("rm -fr /tmp/elumipi_installer")  
-    sudo("git clone --depth 1 https://github.com/elumipi/BaseBuild.git /tmp/elumipi_installer") or die("Unable to clone RACHEL installer repository.")
+    sudo("rm -fr /tmp/elimupi_installer")  
+    # NOTE GIT is still old name; needs rebranding
+    sudo("git clone --depth 1 https://github.com/elumipi/BaseBuild.git /tmp/elimupi_installer") or die("Unable to clone Elimu installer repository.")
 else:
     print "Using local files "
     
