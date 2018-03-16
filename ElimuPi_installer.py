@@ -60,17 +60,18 @@ def USB_automount():
 # Kahn Acadamy content (educational)
 #================================
 def install_kalite():
-	sudo("apt-get install -y python-pip") or die("Unable to install pip.")
-    sudo("pip install --no-cache-dir ka-lite-static") or die("Unable to install KA-Lite")   ##  PBo 20180313-06 Add --no-cache-dir qualifier 
- 	sudo("kalite manage setup --username=" + base_passwd + " --password=" + base_passwd + " --hostname=" + base_hostname + " --description=" + base_hostname) ### PBo 20180315 Removed unwanted confirmation  
-	sudo("mkdir -p /etc/ka-lite") or die("Unable to create /etc/ka-lite configuration directory.")
- 	cp("files/init-functions", "/etc/default/ka-lite") or die("Unable to install KA-Lite configuration script.")
- 	cp("files/init-service", "/etc/init.d/ka-lite") or die("Unable to install KA-Lite service.")
- 	sudo("chmod +x /etc/init.d/ka-lite") or die("Unable to set permissions on KA-Lite service.")
- 	sudo("sh -c 'echo root >/etc/ka-lite/username'") or die("Unable to configure the userid of the KA-Lite process.")
- 	if exists("/etc/systemd"):
- 		sudo("mkdir -p /etc/systemd/system/ka-lite.service.d") or die("Unable to create KA-Lite service options directory.")
- 		cp("files/init-systemd-conf", "/etc/systemd/system/ka-lite.service.d/10-extend-timeout.conf") or die("Unable to increase KA-Lite service startup timeout.")
+    sudo("apt-get install -y python-pip") or die("Unable to install pip.")
+    sudo("pip install --no-cache-dir ka-lite-static") or die("Unable to install KA-Lite")   
+    
+    sudo("kalite manage setup --username=" + base_passwd + " --password=" + base_passwd + " --hostname=" + base_hostname + " --description=" + base_hostname) ### PBo 20180315 Removed unwanted confirmation  
+    sudo("mkdir -p /etc/ka-lite") or die("Unable to create /etc/ka-lite configuration directory.")
+    cp("files/init-functions", "/etc/default/ka-lite") or die("Unable to install KA-Lite configuration script.")
+    cp("files/init-service", "/etc/init.d/ka-lite") or die("Unable to install KA-Lite service.")
+    sudo("chmod +x /etc/init.d/ka-lite") or die("Unable to set permissions on KA-Lite service.")
+    sudo("sh -c 'echo root >/etc/ka-lite/username'") or die("Unable to configure the userid of the KA-Lite process.")
+    if exists("/etc/systemd"):
+        sudo("mkdir -p /etc/systemd/system/ka-lite.service.d") or die("Unable to create KA-Lite service options directory.")
+        cp("files/init-systemd-conf", "/etc/systemd/system/ka-lite.service.d/10-extend-timeout.conf") or die("Unable to increase KA-Lite service startup timeout.")
  	sudo("update-rc.d ka-lite defaults") or die("Unable to register the KA-Lite service.")
 
 	##  PBo 20180313-06 Start with systemctl < sudo("service ka-lite start") or die("Unable to start the KA-Lite service.")
@@ -82,25 +83,25 @@ def install_kalite():
 #    KIWIX WiKi Offline 
 #=========================================================================================================
 def install_kiwix():
-	sudo("mkdir -p /var/kiwix/bin") or die("Unable to make create kiwix directories")
-	kiwix_version = "0.9"
-	sudo("sh -c 'wget -O - http://downloads.sourceforge.net/project/kiwix/"+kiwix_version+"/kiwix-server-"+kiwix_version+"-linux-armv5tejl.tar.bz2 | tar xj -C /var/kiwix/bin'") or die("Unable to download kiwix-server")
-	# the reason we have a sample zim file is so that if no modules
-	# are installed you can still tell that kiwix is running
-	cp("files/kiwix-sample.zim", "/var/kiwix/sample.zim") or die("Unable to install kiwix sample zim")
-	cp("files/kiwix-sample-library.xml", "/var/kiwix/sample-library.xml") or die("Unable to install kiwix sample library")
-	cp("files/dean-kiwix-start.pl", "/var/kiwix/bin/dean-kiwix-start.pl") or die("Unable to copy dean-kiwix-start wrapper")
-	sudo("chmod +x /var/kiwix/bin/dean-kiwix-start.pl") or die("Unable to set permissions on dean-kiwix-start wrapper")
-	cp("files/init-kiwix-service", "/etc/init.d/kiwix") or die("Unable to install kiwix service")
-	sudo("chmod +x /etc/init.d/kiwix") or die("Unable to set permissions on kiwix service.")
-	sudo("update-rc.d kiwix defaults") or die("Unable to register the kiwix service.")
+    sudo("mkdir -p /var/kiwix/bin") or die("Unable to make create kiwix directories")
+    kiwix_version = "0.9"
+    sudo("sh -c 'wget -O - http://downloads.sourceforge.net/project/kiwix/"+kiwix_version+"/kiwix-server-"+kiwix_version+"-linux-armv5tejl.tar.bz2 | tar xj -C /var/kiwix/bin'") or die("Unable to download kiwix-server")
+    # the reason we have a sample zim file is so that if no modules
+    # are installed you can still tell that kiwix is running
+    cp("files/kiwix-sample.zim", "/var/kiwix/sample.zim") or die("Unable to install kiwix sample zim")
+    cp("files/kiwix-sample-library.xml", "/var/kiwix/sample-library.xml") or die("Unable to install kiwix sample library")
+    cp("files/dean-kiwix-start.pl", "/var/kiwix/bin/dean-kiwix-start.pl") or die("Unable to copy dean-kiwix-start wrapper")
+    sudo("chmod +x /var/kiwix/bin/dean-kiwix-start.pl") or die("Unable to set permissions on dean-kiwix-start wrapper")
+    cp("files/init-kiwix-service", "/etc/init.d/kiwix") or die("Unable to install kiwix service")
+    sudo("chmod +x /etc/init.d/kiwix") or die("Unable to set permissions on kiwix service.")
+    sudo("update-rc.d kiwix defaults") or die("Unable to register the kiwix service.")
     sudo("sed -i 's/dean-kiwix-start.pl/dean-kiwix-start.pl/g' /etc/init.d/kiwix") or die("Unable to change /etc/init.d/kiwix")    ## PBo 20180312-07
-	sudo("systemctl daemon-reload") or die("systemctl daemon reload failed")
-	sudo("systemctl start kiwix") or die("Unable to start the kiwix service")
+    sudo("systemctl daemon-reload") or die("systemctl daemon reload failed")
+    sudo("systemctl start kiwix") or die("Unable to start the kiwix service")
 
-	## PBo 20180312-07 sudo("service kiwix start") or die("Unable to start the kiwix service.")
-	sudo("sh -c 'echo "+kiwix_version+" >/etc/kiwix-version'") or die("Unable to record kiwix version.")
-	return True
+    ## PBo 20180312-07 sudo("service kiwix start") or die("Unable to start the kiwix service.")
+    sudo("sh -c 'echo "+kiwix_version+" >/etc/kiwix-version'") or die("Unable to record kiwix version.")
+    return True
 
 #================================
 #    Citadel MAIL solutiuon 
