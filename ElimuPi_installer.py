@@ -23,6 +23,7 @@ import platform
 #=========================================================================================================
 # Settings for build
 #=========================================================================================================
+base_hostname       = "elimupi"             # Defaul hostname
 base_user           = "pi"                  # Default user name to use
 base_passwd         = "elimupi"             # Default password for all services
 base_ip_range       = "10.11.0"             # IP range (/24) for the WiFI interface
@@ -60,12 +61,8 @@ def USB_automount():
 #================================
 def install_kalite():
 	sudo("apt-get install -y python-pip") or die("Unable to install pip.")
-	##  PBo 20180313-06 Add --no-cache-dir qualifier sudo("pip install ka-lite-static") or die("Unable to install KA-Lite")
-        sudo("pip install --no-cache-dir ka-lite-static") or die("Unable to install KA-Lite")
-
- 	### PBo 20180315 Removed unwanted confirmation  sudo("printf '\nyes\nyes\nno\n' | sudo kalite manage setup --username=rachel --password=rachel --hostname=rachel --description=rachel")
- 	sudo("kalite manage setup --username=rachel --password=rachel --hostname=rachel --description=rachel")
-
+    sudo("pip install --no-cache-dir ka-lite-static") or die("Unable to install KA-Lite")   ##  PBo 20180313-06 Add --no-cache-dir qualifier 
+ 	sudo("kalite manage setup --username=" + base_passwd + " --password=" + base_passwd + " --hostname=" + base_hostname + " --description=" + base_hostname) ### PBo 20180315 Removed unwanted confirmation  
 	sudo("mkdir -p /etc/ka-lite") or die("Unable to create /etc/ka-lite configuration directory.")
  	cp("files/init-functions", "/etc/default/ka-lite") or die("Unable to install KA-Lite configuration script.")
  	cp("files/init-service", "/etc/init.d/ka-lite") or die("Unable to install KA-Lite service.")
@@ -92,19 +89,16 @@ def install_kiwix():
 	# are installed you can still tell that kiwix is running
 	cp("files/kiwix-sample.zim", "/var/kiwix/sample.zim") or die("Unable to install kiwix sample zim")
 	cp("files/kiwix-sample-library.xml", "/var/kiwix/sample-library.xml") or die("Unable to install kiwix sample library")
-	cp("files/dean-kiwix-start.pl", "/var/kiwix/bin/dean-kiwix-start.pl") or die("Unable to coppy rachel-kiwix-start wrapper")
-	sudo("chmod +x /var/kiwix/bin/dean-kiwix-start.pl") or die("Unable to set permissions on rachek-kiwix-start wrapper")
+	cp("files/dean-kiwix-start.pl", "/var/kiwix/bin/dean-kiwix-start.pl") or die("Unable to copy dean-kiwix-start wrapper")
+	sudo("chmod +x /var/kiwix/bin/dean-kiwix-start.pl") or die("Unable to set permissions on dean-kiwix-start wrapper")
 	cp("files/init-kiwix-service", "/etc/init.d/kiwix") or die("Unable to install kiwix service")
 	sudo("chmod +x /etc/init.d/kiwix") or die("Unable to set permissions on kiwix service.")
 	sudo("update-rc.d kiwix defaults") or die("Unable to register the kiwix service.")
-
-        ## PBo 20180312-07
-        sudo ("sed -i 's/rachel-kiwix-start.pl/dean-kiwix-start.pl/g' /etc/init.d/kiwix") or die("Unable to change /etc/init.d/kiwix")
-	sudo ("systemctl daemon-reload") or die("systemctl daemon reload failed")
-	sudo ("systemctl start kiwix") or die("Unable to start the kiwix service")
+    sudo("sed -i 's/dean-kiwix-start.pl/dean-kiwix-start.pl/g' /etc/init.d/kiwix") or die("Unable to change /etc/init.d/kiwix")    ## PBo 20180312-07
+	sudo("systemctl daemon-reload") or die("systemctl daemon reload failed")
+	sudo("systemctl start kiwix") or die("Unable to start the kiwix service")
 
 	## PBo 20180312-07 sudo("service kiwix start") or die("Unable to start the kiwix service.")
-
 	sudo("sh -c 'echo "+kiwix_version+" >/etc/kiwix-version'") or die("Unable to record kiwix version.")
 	return True
 
@@ -502,7 +496,7 @@ if not is_vagrant():
 if not is_vagrant():
 	cp("files/hosts", "/etc/hosts") or die("Unable to copy hosts file.")
 	cp("files/hostname", "/etc/hostname") or die("Unable to copy hostname file.")
-	sudo("/etc/init.d/hostname.sh") or die("Unable to set hostname.")
+    sudo("systemctl restart hostname") or die("Unable to start the hostname service.")
 
 #================================
 # record the version of the installer we're using - this must be manually
