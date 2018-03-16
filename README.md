@@ -36,9 +36,7 @@ This version of the ElimuPi build supports:
 6. paste in the following command after reboot.
 `curl -fsS https://raw.githubusercontent.com/elumipi/BaseBuild/master/ElimuPi_installer.py | python`
 
-Test script: `curl -fsS https://10.1.1.74:8080/ElimuPi/ElimuPi_installer.py | python`
-
-`wget http://10.1.1.74:8080/ElimuPi/ElimuPi_installer.py && chmod 700 ElimuPi_installer.py && ./ElimuPi_installer.py` 
+Test script: `wget https://raw.githubusercontent.com/elumipi/BaseBuild/master/ElimuPi_installer.py && chmod 700 ElimuPi_installer.py && ./ElimuPi_installer.py` 
 
 Please note that this will change the 'pi' user's password to: elimupi
 
