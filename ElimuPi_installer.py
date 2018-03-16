@@ -496,7 +496,6 @@ if not is_vagrant():
 if not is_vagrant():
 	cp("files/hosts", "/etc/hosts") or die("Unable to copy hosts file.")
 	cp("files/hostname", "/etc/hostname") or die("Unable to copy hostname file.")
-    sudo("systemctl restart hostname") or die("Unable to start the hostname service.")
 
 #================================
 # record the version of the installer we're using - this must be manually
