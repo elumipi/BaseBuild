@@ -384,7 +384,6 @@ def is_vagrant():
 #================================
 def basedir():
     bindir = os.path.dirname(os.path.realpath(sys.argv[0]))     # Should be initial folder where install is started 
-    print 'Install  : ' + bindir 
     if not bindir:
         bindir = "."
     if exists(bindir + "/files"):                   # Started from local fileset
@@ -458,9 +457,9 @@ def PHASE0():
     #================================
     if basedir()[-17:] == "elimupi_installer":       # check if GIT install
         print "Fetching files from GIT"
-        sudo("rm -fr /tmp/elimupi_installer")  
+        sudo("rm -fr " + basedir() + "/elimupi_installer")  
         # NOTE GIT is still old name; needs rebranding
-        sudo("git clone --depth 1 https://github.com/elumipi/BaseBuild.git /tmp/elimupi_installer") or die("Unable to clone Elimu installer repository.")
+        sudo("git clone --depth 1 https://github.com/elumipi/BaseBuild.git " + basedir() + "/elimupi_installer") or die("Unable to clone Elimu installer repository.")
     else:
         print "Using local files "
         
