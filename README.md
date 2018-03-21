@@ -29,7 +29,7 @@ This version of the ElimuPi build supports:
 
 5. Logon with user pi (password: raspberry)  
 
-5. Expand your microSD card partition
+5. Expand your microSD card partition 
 `sudo raspi-config`
 `sudo reboot`
 
@@ -41,6 +41,7 @@ Please note that this will change the 'pi' user's password to: elimupi
 All default username and passwords will be elimupi/elimupi unless noted differently.
 
 *NOTE1: This install is tested to work with `2017-09-07-raspbian-stretch-lite` 
+        and `2018-03-13-raspbian-stretch-lite`  
 
 *NOTE2: for WIFI to work on the RaspberryPi 2 unit, you must have the WIFI USB dongle inserted
 during installation so that the install script can configure it properly. RaspberryPi 3 models have on board WiFi and don't need a WIFI USB dongle.
