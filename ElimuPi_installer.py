@@ -597,7 +597,7 @@ if os.path.isfile(base_build + '_install'):
 else: 
     install_phase = 0
 
-print "Install phase: " + install_phase
+print "Install phase: (" + str(install_phase) + ")"
 
 if install_phase == 0:
     PHASE0()
