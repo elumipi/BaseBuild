@@ -28,7 +28,7 @@ base_user           = "pi"                                          # Default us
 base_passwd         = "elimupi"                                     # Default password for all services
 base_ip_range       = "10.11.0"                                     # IP range (/24) for the WiFI interface
 base_ip             = "10.11.0.1"                                   # Default IP address for the WiFi interface
-base_build          = "ELIMUPI-20180316"                            # Date of build
+base_build          = "ELIMUPI-20180322"                            # Date of build
 base_git            = "https://github.com/elumipi/BaseBuild.git"    # Git location
 
 installed_modules   = [];                   # Installed modules
@@ -603,7 +603,7 @@ if install_phase == 0:
     if not yes_or_no("Do you want to install the ElimuPi build"):
         die('Installation aborted')
     PHASE0()
-elif ifinstall_phase == 1:
+elif install_phase == 1:
     if not yes_or_no("Do you want to continue the ElimuPi build"):
         die('Installation aborted')
     PHASE1()
