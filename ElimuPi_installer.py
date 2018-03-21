@@ -413,9 +413,6 @@ def wifi_present():
 # PHASE 0 install
 ############################################
 def PHASE0():
-    if not yes_or_no("Do you want to install the ElimuPi build"):
-        die('Installation aborted')
-        
     #================================
     # Check if on Linux and debian (requirement for ElimuPi)
     #================================
@@ -456,10 +453,10 @@ def PHASE0():
     # Clone the GIT repo.
     #================================
     if basedir()[-17:] == "elimupi_installer":       # check if GIT install
-        print "Fetching files from GIT"
-        sudo("rm -fr " + basedir() + "/elimupi_installer")  
+        print "Fetching files from GIT to " + basedir()
+        sudo("rm -fr " + basedir())  
         # NOTE GIT is still old name; needs rebranding
-        sudo("git clone --depth 1 https://github.com/elumipi/BaseBuild.git " + basedir() + "/elimupi_installer") or die("Unable to clone Elimu installer repository.")
+        sudo("git clone --depth 1 https://github.com/elumipi/BaseBuild.git " + basedir()) or die("Unable to clone Elimu installer repository.")
     else:
         print "Using local files "
         
@@ -582,12 +579,7 @@ def PHASE1():
 ############################################
 #    Main code start
 ############################################
-print '--------------------------------------------------------------------------'
-print 'Platform : ' + platform.platform()   # Platform : Linux-4.9.41-v7+-armv7l-with-debian-9.1
-print 'System   : ' + platform.system()     # System   : Linux
-print 'Release  : ' + platform.release()    # Release  : 4.9.41-v7+
-print 'Version  : ' + platform.version()    # Version  : #1023 SMP Tue Aug 8 16:00:15 BST 2017
-print '--------------------------------------------------------------------------'
+
 if os.path.isfile(base_build + '_install'):
     print "Continue install after reboot"
     # get phase
@@ -596,12 +588,22 @@ if os.path.isfile(base_build + '_install'):
 else: 
     install_phase = 0
 
-print "Install phase: (" + str(install_phase) + ")"
-
+print '--------------------------------------------------------------------------'
+print 'ElimuPi build : ' + base_build                   # Build version
+print 'Platform      : ' + platform.platform()          # Platform : Linux-4.9.41-v7+-armv7l-with-debian-9.1
+print 'System        : ' + platform.system()            # System   : Linux
+print 'OS Release    : ' + platform.release()           # Release  : 4.9.41-v7+
+print 'OS Version    : ' + platform.version()           # Version  : #1023 SMP Tue Aug 8 16:00:15 BST 2017
+print "Install phase : (" + str(install_phase) + ")"    # Installer phase
+print '--------------------------------------------------------------------------'
 if install_phase == 0:
+    if not yes_or_no("Do you want to install the ElimuPi build"):
+        die('Installation aborted')
     PHASE0()
 elif ifinstall_phase == 1:
+    if not yes_or_no("Do you want to continue the ElimuPi build"):
+        die('Installation aborted')
     PHASE1()
 else: 
     print "Invallid installer state"
-
+    die('Installation aborted')
