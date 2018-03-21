@@ -23,12 +23,14 @@ import platform
 #================================
 # Settings for build
 #================================
-base_hostname       = "elimupi"             # Defaul hostname
-base_user           = "pi"                  # Default user name to use
-base_passwd         = "elimupi"             # Default password for all services
-base_ip_range       = "10.11.0"             # IP range (/24) for the WiFI interface
-base_ip             = "10.11.0.1"           # Default IP address for the WiFi interface
-base_build          = "ELIMUPI-20180316"    # Date of build
+base_hostname       = "elimupi"                                     # Defaul hostname
+base_user           = "pi"                                          # Default user name to use
+base_passwd         = "elimupi"                                     # Default password for all services
+base_ip_range       = "10.11.0"                                     # IP range (/24) for the WiFI interface
+base_ip             = "10.11.0.1"                                   # Default IP address for the WiFi interface
+base_build          = "ELIMUPI-20180316"                            # Date of build
+base_git            = "https://github.com/elumipi/BaseBuild.git"    # Git location
+
 installed_modules   = [];                   # Installed modules
 
 #================================
@@ -456,7 +458,8 @@ def PHASE0():
         print "Fetching files from GIT to " + basedir()
         sudo("rm -fr " + basedir())  
         # NOTE GIT is still old name; needs rebranding
-        sudo("git clone --depth 1 https://github.com/elumipi/BaseBuild.git " + basedir()) or die("Unable to clone Elimu installer repository.")
+        cmd("git clone --depth 1 " + base_git + " " + basedir()) or die("Unable to clone Elimu installer repository.")
+        cmd('chmod 700 ' + basedir() + '/ElimuPi_installer.py') or die("Unable to set ElimuPi installer script permissions.")
     else:
         print "Using local files "
         
