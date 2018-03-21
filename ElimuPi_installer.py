@@ -20,20 +20,20 @@ import urllib
 import argparse
 import platform
 
-#=========================================================================================================
+#================================
 # Settings for build
-#=========================================================================================================
+#================================
 base_hostname       = "elimupi"             # Defaul hostname
 base_user           = "pi"                  # Default user name to use
 base_passwd         = "elimupi"             # Default password for all services
 base_ip_range       = "10.11.0"             # IP range (/24) for the WiFI interface
 base_ip             = "10.11.0.1"           # Default IP address for the WiFi interface
-base_build          = "ELIMUPI-20180315"    # Date of build
+base_build          = "ELIMUPI-20180316"    # Date of build
 installed_modules   = [];                   # Installed modules
 
-#=========================================================================================================
+#================================
 # Command line arguments
-#=========================================================================================================
+#================================
 argparser = argparse.ArgumentParser()
 argparser.add_argument( "--khan-academy",
                        choices=["none", "ka-lite"],
@@ -79,9 +79,9 @@ def install_kalite():
     sudo("sh -c '/usr/local/bin/kalite --version > /etc/kalite-version'") or die("Unable to record kalite version")
     return True
 
-#=========================================================================================================
+#================================
 #    KIWIX WiKi Offline 
-#=========================================================================================================
+#================================
 def install_kiwix():
     sudo("mkdir -p /var/kiwix/bin") or die("Unable to make create kiwix directories")
     kiwix_version = "0.9"
@@ -128,8 +128,7 @@ def install_wordpress():
         sudo("chown -R www-data: .")
         # Setup database for WordPress
         sudo("mysql --user=" + base_user + " --password=" + base_passwd + " <files/create_wordpress.sql" )
-        # CURL to index.php
-        
+
         # Add caching for performance reasons
         installed_modules.extend(['wordpress'])
         return True
@@ -179,9 +178,9 @@ def install_sqlite():
     sudo("sudo apt-get install -y sqlite3") or die("Unable to install sqlite3")
     return True 
 
-#=========================================================================================================
+#================================
 # Apache installer
-#=========================================================================================================
+#================================
 def install_apache():
     print "========================================="
     print "Installing Apache platform run #3 (PBo) "
@@ -189,11 +188,7 @@ def install_apache():
     sudo("sudo apt-get -y install apache2 libxml2-dev") or die("Unable to install Apache.")
     sudo("sudo apt-get -y install libapache2-mod-php7.0") or die("Unable to install libapache2-mod-php7.0.")
     sudo("sudo apt-get -y install php7.0-cgi") or die("Unable to install php7.0-cgi.")
-    
-    
-    # Fails to compile!!!!!!
     sudo("yes '' | sudo pecl install -f stem") or die("Unable to install php stemmer")
-    
     # Install stemming
     sudo("wget https://pecl.php.net/get/stem-1.5.1.tgz") or die("Unable to download kiwix-server")
     sudo("tar -xvf stem-1.5.1.tgz -C stem")
@@ -201,23 +196,18 @@ def install_apache():
     sudo("patch -p1 < patch.file")
     sudo("md5sum stem.c")
     ## check package.xml <file md5sum="ee8c88ec8b8f06f686fcebdffe744b08" name="stem.c" role="src" />
-    
     # add the corrected checksum
     sudo("sed -i \"s/<file md5sum=\\\"*\\\" name=\\\"stem.c\\\" role=\\\"src\\\" \\/>/<file md5sum=\\\"ee8c88ec8b8f06f686fcebdffe744b08\\\" name=\\\"stem.c\\\" role=\\\"src\\\" \\/>/\" p.xml")
-    
     sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php/7.0/cli/php.ini'") or die("Unable to install stemmer CLI config")
     sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php/7.0/apache2/php.ini'") or die("Unable to install stemmer Apache config")
     sudo("sh -c 'sed -i \"s/upload_max_filesize *= *.*/upload_max_filesize = 512M/\" /etc/php/7.0/apache2/php.ini'") or die("Unable to increase upload_max_filesize in apache2/php.ini")
     sudo("sh -c 'sed -i \"s/post_max_size *= *.*/post_max_size = 512M/\" /etc/php/7.0/apache2/php.ini'") or die("Unable to increase post_max_size in apache2/php.ini")
     sudo("service apache2 stop") or die("Unable to stop Apache2.")
-    
     #cp("files/apache2.conf", "/etc/apache2/apache2.conf") or die("Unable to copy Apache2.conf")
     cp("files/default", "/etc/apache2/sites-available/contentshell.conf") or die("Unable to set default Apache site.")
     sudo("a2dissite 000-default") or die("Unable to disable default Apache site.")
     sudo("a2ensite contentshell.conf") or die("Unable to enable contenthell Apache site.")
-
     ## PBo 20180313-02 No /etc/mysql folder here, moved to install_mysqql<    cp("files/my.cnf", "/etc/mysql/my.cnf") or die("Unable to copy MySQL server configuration.")
-
     sudo("a2enmod php7.0 proxy proxy_html rewrite") or die("Unable to enable Apache2 dependency modules.")
     if exists("/etc/apache2/mods-available/xml2enc.load"):
         sudo("a2enmod xml2enc") or die("Unable to enable Apache2 xml2enc module.")
@@ -225,6 +215,120 @@ def install_apache():
     installed_modules.extend(['apache'])
     return True 
 
+#================================
+# Setup WiFi
+#================================
+def install_wifi():
+    sudo("apt-get -y install hostapd udhcpd") or die("Unable install hostapd and udhcpd.")
+    # PVe correctly write the udhcp config file
+    # cp("files/udhcpd.conf", "/etc/udhcpd.conf") or die("Unable to copy uDHCPd configuration (udhcpd.conf)")
+    
+    sudo("sh -c 'echo \"# Sample udhcpd configuration file (/etc/udhcpd.conf)\" >/etc/udhcpd.conf'")                                    or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# The start and end of the IP lease block\" >>/etc/udhcpd.conf'")                                               or die("Unable to write to udhcpd.conf") 
+    sudo("sh -c 'echo \"start        " + base_ip_range + ".11    #default: 192.168.0.20\" >>/etc/udhcpd.conf'")                         or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"end        " + base_ip_range + ".199    #default: 192.168.0.254\" >>/etc/udhcpd.conf'")                         or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# The interface that udhcpd will use\" >>/etc/udhcpd.conf'")                                                    or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"interface    wlan0        #default: eth0\" >>/etc/udhcpd.conf'")                                                or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#     \" >>/etc/udhcpd.conf'")                                                                                  or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# The maximim number of leases (includes addressesd reserved\" >>/etc/udhcpd.conf'")                            or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# by OFFER's, DECLINE's, and ARP conficts\" >>/etc/udhcpd.conf'")                                               or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#     \" >>/etc/udhcpd.conf'")                                                                                  or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#     #max_leases    254        #default: 254\" >>/etc/udhcpd.conf'")                                           or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#     \" >>/etc/udhcpd.conf'")                                                                                  or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#     \" >>/etc/udhcpd.conf'")                                                                                  or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# If remaining is true (default), udhcpd will store the time\" >>/etc/udhcpd.conf'")                            or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# remaining for each lease in the udhcpd leases file. This is\" >>/etc/udhcpd.conf'")                           or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# for embedded systems that cannot keep time between reboots.\" >>/etc/udhcpd.conf'")                           or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# If you set remaining to no, the absolute time that the lease\" >>/etc/udhcpd.conf'")                          or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# expires at will be stored in the dhcpd.leases file.\" >>/etc/udhcpd.conf'")                                   or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"remaining    yes        #default: yes\" >>/etc/udhcpd.conf'")                                                   or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# The time period at which udhcpd will write out a dhcpd.leases\" >>/etc/udhcpd.conf'")                         or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# file. If this is 0, udhcpd will never automatically write a\" >>/etc/udhcpd.conf'")                           or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# lease file. (specified in seconds)\" >>/etc/udhcpd.conf'")                                                    or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#auto_time    7200        #default: 7200 (2 hours)\" >>/etc/udhcpd.conf'")                                      or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# The amount of time that an IP will be reserved (leased) for if a\" >>/etc/udhcpd.conf'")                      or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# DHCP decline message is received (seconds).\" >>/etc/udhcpd.conf'")                                           or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#decline_time    3600        #default: 3600 (1 hour)\" >>/etc/udhcpd.conf'")                                    or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# The amount of time that an IP will be reserved (leased) for if an\" >>/etc/udhcpd.conf'")                     or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# ARP conflct occurs. (seconds\" >>/etc/udhcpd.conf'")                                                          or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#conflict_time    3600        #default: 3600 (1 hour)\" >>/etc/udhcpd.conf'")                                   or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# How long an offered address is reserved (leased) in seconds\" >>/etc/udhcpd.conf'")                           or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#offer_time    60        #default: 60 (1 minute)\" >>/etc/udhcpd.conf'")                                        or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# If a lease to be given is below this value, the full lease time is\" >>/etc/udhcpd.conf'")                    or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# instead used (seconds).\" >>/etc/udhcpd.conf'")                                                               or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#min_lease    60        #defult: 60\" >>/etc/udhcpd.conf'")                                                     or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# The location of the leases file\" >>/etc/udhcpd.conf'")                                                       or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#lease_file    /var/lib/misc/udhcpd.leases    #defualt: /var/lib/misc/udhcpd.leases\" >>/etc/udhcpd.conf'")     or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# The location of the pid file\" >>/etc/udhcpd.conf'")                                                          or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#pidfile    /var/run/udhcpd.pid    #default: /var/run/udhcpd.pid\" >>/etc/udhcpd.conf'")                        or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# Everytime udhcpd writes a leases file, the below script will be called.\" >>/etc/udhcpd.conf'")               or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# Useful for writing the lease file to flash every few hours.\" >>/etc/udhcpd.conf'")                           or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#notify_file                #default: (no script)\" >>/etc/udhcpd.conf'")                                       or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#notify_file    dumpleases    # <--- useful for debugging\" >>/etc/udhcpd.conf'")                               or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# The following are bootp specific options, setable by udhcpd.\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#siaddr        192.168.0.22        #default: 0.0.0.0\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#sname        zorak            #default: (none)\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#boot_file    /var/nfs_root        #default: (none)\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# The remainer of options are DHCP options and can be specifed with the\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# keyword 'opt' or 'option'. If an option can take multiple items, such\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# as the dns option, they can be listed on the same line, or multiple\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# lines. The only option with a default is 'lease'.\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"opt    dns    8.8.8.8 8.8.4.4 # Google Public DNS servers\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \" option    subnet    255.255.255.0\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"opt    router    " + base_ip + "\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt    wins    192.168.10.10\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"option    domain    local\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"option    lease    864000        # 10 days of seconds\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# Currently supported options, for more info, see options.c\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt subnet\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt timezone\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt router\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt timesrv\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt namesrv\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt dns\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt logsrv\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt cookiesrv\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt lprsrv\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt bootsize\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt domain\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt swapsrv\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt rootpath\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt ipttl\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt mtu\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt broadcast\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt wins\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt lease\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt ntpsrv\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt tftp\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt bootfile\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#opt wpad\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+#     
+    sudo("sh -c 'echo \"# Static leases map\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#static_lease 00:60:08:11:CE:4E 192.168.0.54\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#static_lease 00:60:08:11:CE:3E 192.168.0.44\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    # End of writing config
+    
+    cp("files/udhcpd", "/etc/default/udhcpd") or die("Unable to copy UDHCPd configuration (udhcpd)")
+    cp("files/hostapd", "/etc/default/hostapd") or die("Unable to copy hostapd configuration (hostapd)")
+    cp("files/hostapd.conf", "/etc/hostapd/hostapd.conf") or die("Unable to copy hostapd configuration (hostapd.conf)")
+    sudo("sh -c 'echo 1 > /proc/sys/net/ipv4/ip_forward'") or die("Unable to set ipv4 forwarding")
+    cp("files/sysctl.conf", "/etc/sysctl.conf") or die("Unable to copy sysctl configuration (sysctl.conf)")
+    sudo("iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE") or die("Unable to set iptables MASQUERADE on eth0.")
+    sudo("iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT") or die("Unable to forward wlan0 to eth0.")
+    sudo("iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT") or die("Unable to forward wlan0 to eth0.")
+    sudo("sh -c 'iptables-save > /etc/iptables.ipv4.nat'") or die("Unable to save iptables configuration.")
+    sudo("ifconfig wlan0 " + base_ip ) or die("Unable to set wlan0 IP address (" + base_ip + ")")
+    sudo("service hostapd start") or die("Unable to start hostapd service.")
+    sudo("service udhcpd start") or die("Unable to start udhcpd service.")
+    sudo("update-rc.d hostapd enable") or die("Unable to enable hostapd on boot.")
+    sudo("update-rc.d udhcpd enable") or die("Unable to enable UDHCPd on boot.")
+    # udhcpd wasn't starting properly at boot (probably starting before interface was ready)
+    # for now we we just force it to restart after setting the interface
+    sudo("sh -c 'sed -i \"s/^exit 0//\" /etc/rc.local'") or die("Unable to remove exit from end of /etc/rc.local")
+    sudo("sh -c 'echo ifconfig wlan0 "+ base_ip + " >> /etc/rc.local; echo service udhcpd restart >> /etc/rc.local;'") or die("Unable to setup udhcpd reset at boot.")
+    sudo("sh -c 'echo exit 0 >> /etc/rc.local'") or die("Unable to replace exit to end of /etc/rc.local")
+    #sudo("ifdown eth0 && ifdown wlan0 && ifup eth0 && ifup wlan0") or die("Unable to restart network interfaces.")
+    return True
 #################################
 # Support functions
 #################################
@@ -288,7 +392,6 @@ def basedir():
     else:
         return bindir + "/elimupi_installer"        # Started from GIT
 
-
 #================================
 # Copy command
 #================================    
@@ -306,50 +409,11 @@ def wifi_present():
         return False
     return exists("/sys/class/net/wlan0")
 
-#================================
-# Setup WiFi
-#================================
-def install_wifi():
-    sudo("apt-get -y install hostapd udhcpd") or die("Unable install hostapd and udhcpd.")
-    cp("files/udhcpd.conf", "/etc/udhcpd.conf") or die("Unable to copy uDHCPd configuration (udhcpd.conf)")
-    cp("files/udhcpd", "/etc/default/udhcpd") or die("Unable to copy UDHCPd configuration (udhcpd)")
-    cp("files/hostapd", "/etc/default/hostapd") or die("Unable to copy hostapd configuration (hostapd)")
-    cp("files/hostapd.conf", "/etc/hostapd/hostapd.conf") or die("Unable to copy hostapd configuration (hostapd.conf)")
-    sudo("sh -c 'echo 1 > /proc/sys/net/ipv4/ip_forward'") or die("Unable to set ipv4 forwarding")
-    cp("files/sysctl.conf", "/etc/sysctl.conf") or die("Unable to copy sysctl configuration (sysctl.conf)")
-    sudo("iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE") or die("Unable to set iptables MASQUERADE on eth0.")
-    sudo("iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT") or die("Unable to forward wlan0 to eth0.")
-    sudo("iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT") or die("Unable to forward wlan0 to eth0.")
-    sudo("sh -c 'iptables-save > /etc/iptables.ipv4.nat'") or die("Unable to save iptables configuration.")
-    sudo("ifconfig wlan0 10.10.10.10") or die("Unable to set wlan0 IP address (10.10.10.10)")
-    sudo("service hostapd start") or die("Unable to start hostapd service.")
-    sudo("service udhcpd start") or die("Unable to start udhcpd service.")
-    sudo("update-rc.d hostapd enable") or die("Unable to enable hostapd on boot.")
-    sudo("update-rc.d udhcpd enable") or die("Unable to enable UDHCPd on boot.")
-    # udhcpd wasn't starting properly at boot (probably starting before interface was ready)
-    # for now we we just force it to restart after setting the interface
-    sudo("sh -c 'sed -i \"s/^exit 0//\" /etc/rc.local'") or die("Unable to remove exit from end of /etc/rc.local")
-    sudo("sh -c 'echo ifconfig wlan0 10.10.10.10 >> /etc/rc.local; echo service udhcpd restart >> /etc/rc.local;'") or die("Unable to setup udhcpd reset at boot.")
-    sudo("sh -c 'echo exit 0 >> /etc/rc.local'") or die("Unable to replace exit to end of /etc/rc.local")
-    #sudo("ifdown eth0 && ifdown wlan0 && ifup eth0 && ifup wlan0") or die("Unable to restart network interfaces.")
-    return True
 
 ############################################
-#    Main code start
+# PHASE 0 install
 ############################################
-print '--------------------------------------------------------------------------'
-print 'Platform : ' + platform.platform()   # Platform : Linux-4.9.41-v7+-armv7l-with-debian-9.1
-print 'System   : ' + platform.system()     # System   : Linux
-print 'Release  : ' + platform.release()    # Release  : 4.9.41-v7+
-print 'Version  : ' + platform.version()    # Version  : #1023 SMP Tue Aug 8 16:00:15 BST 2017
-print '--------------------------------------------------------------------------'
-if os.path.isfile(base_build + '_install'):
-    print "Continue install after reboot"
-    # get phase
-    install_phase = open(base_build + '_install').read()
-    print "Install phase: " + install_phase 
-else: 
-    install_phase = 0  
+def PHASE0():
     if not yes_or_no("Do you want to install the ElimuPi build"):
         die('Installation aborted')
         
@@ -385,12 +449,21 @@ else:
     sudo("apt-get dist-upgrade -y") or die("Unable to upgrade Raspbian.")
     
     #================================
-    # Write install status to file
+    # Fix 'strange behaviour in vim (PBo 20180315)
     #================================
-    file = open(base_build + '_install', 'w')
-    file.write('1')                                                     # Write phase to file
-    file.close()
+    sudo("sed -i  's/set compatible/set nocompatible/g' /etc/vim/vimrc.tiny") or die("Unable to fix vimrc.tiny")
     
+    #================================
+    # Clone the GIT repo.
+    #================================
+    if basedir()[-17:] == "elimupi_installer":       # check if GIT install
+        print "Fetching files from GIT"
+        sudo("rm -fr /tmp/elimupi_installer")  
+        # NOTE GIT is still old name; needs rebranding
+        sudo("git clone --depth 1 https://github.com/elumipi/BaseBuild.git /tmp/elimupi_installer") or die("Unable to clone Elimu installer repository.")
+    else:
+        print "Using local files "
+        
     #================================
     # Make installer autorun
     #================================
@@ -402,10 +475,12 @@ else:
         print "Autostart enabled"
 
     #================================
-    # Fix 'strange behaviour in vim (PBo 20180315)
+    # Write install status to file
     #================================
-    sudo("sed -i  's/set compatible/set nocompatible/g' /etc/vim/vimrc.tiny") or die("Unable to fix vimrc.tiny")
-        
+    file = open(base_build + '_install', 'w')
+    file.write('1')                                                     # Write phase to file
+    file.close()
+    
     #================================
     # Reboot
     #================================
@@ -416,98 +491,118 @@ else:
     raw_input('')
     sudo("reboot") or die("Unable to reboot Raspbian.")
 
-#================================
-# Clone the GIT repo.
-#================================
-if basedir()[-17:] == "elimupi_installer":       # check if GIT install
-    print "Fetching files from GIT"
-    sudo("rm -fr /tmp/elimupi_installer")  
-    # NOTE GIT is still old name; needs rebranding
-    sudo("git clone --depth 1 https://github.com/elumipi/BaseBuild.git /tmp/elimupi_installer") or die("Unable to clone Elimu installer repository.")
-else:
-    print "Using local files "
+############################################
+# PHASE 1 install
+############################################
+def PHASE1():
+    #================================
+    # Update Raspi firmware
+    #================================
+    if not is_vagrant():
+        sudo("yes | sudo rpi-update") or die("Unable to upgrade Raspberry Pi firmware")
     
-#================================
-# Update Raspi firmware
-#================================
-if not is_vagrant():
-    sudo("yes | sudo rpi-update") or die("Unable to upgrade Raspberry Pi firmware")
-
-#================================
-# Install USB automounter
-#================================
-install_usb_mounter() or die("Unable to install automounter.")
-
-#================================
-# Setup wifi hotspot
-#================================
-if wifi_present() and args.install_wifi:
-    install_wifi() or die("Unable to install WiFi.")
-
-#================================
-# Setup LAN
-#================================
-if not is_vagrant():
-    cp("files/interfaces", "/etc/network/interfaces") or die("Unable to copy network interface configuration (interfaces)")
-
-#================================
-# Extra wifi driver configuration
-#================================
-if wifi_present() and args.install_wifi:
-    cp("files/hostapd_RTL8188CUS", "/etc/hostapd/hostapd.conf.RTL8188CUS") or die("Unable to copy RTL8188CUS hostapd configuration.")
-    cp("files/hostapd_realtek.conf", "/etc/hostapd/hostapd.conf.realtek") or die("Unable to copy realtek hostapd configuration.")
+    #================================
+    # Install USB automounter
+    #================================
+    install_usb_mounter() or die("Unable to install automounter.")
     
+    #================================
+    # Setup wifi hotspot
+    #================================
+    if wifi_present() and args.install_wifi:
+        install_wifi() or die("Unable to install WiFi.")
+    
+    #================================
+    # Setup LAN
+    #================================
+    if not is_vagrant():
+        cp("files/interfaces", "/etc/network/interfaces") or die("Unable to copy network interface configuration (interfaces)")
+    
+    #================================
+    # Extra wifi driver configuration
+    #================================
+    if wifi_present() and args.install_wifi:
+        cp("files/hostapd_RTL8188CUS", "/etc/hostapd/hostapd.conf.RTL8188CUS") or die("Unable to copy RTL8188CUS hostapd configuration.")
+        cp("files/hostapd_realtek.conf", "/etc/hostapd/hostapd.conf.realtek") or die("Unable to copy realtek hostapd configuration.")
+        
+    
+    #================================
+    # Install components 
+    #================================
+    install_php() or die("Unable to install php.")
+    install_apache() or die("Unable to install Apache.")
+    install_mysql() or die("Unable to install mysql.")
+    install_sqlite() or die("Unable to install sqlite.")
+    install_citadel() or die("Unable to install Citadel.")
+    
+    #================================
+    # Install web frontend (For now Rachel!!!)
+    #================================
+    #sudo("rm -fr /var/www") or die("Unable to delete existing default web application (/var/www).")
+    #sudo("git clone --depth 1 https://github.com/rachelproject/contentshell /var/www") or die("Unable to download RACHEL web application.")
+    #sudo("chown -R www-data.www-data /var/www") or die("Unable to set permissions on RACHEL web application (/var/www).")
+    #sudo("sh -c \"umask 0227; echo 'www-data ALL=(ALL) NOPASSWD: /sbin/shutdown' >> /etc/sudoers.d/www-shutdown\"") or die("Unable to add www-data to sudoers for web shutdown")
+    #sudo("usermod -a -G adm www-data") or die("Unable to add www-data to adm group (so stats.php can read logs)")
+    
+    #================================
+    # KAHN academy (optional)
+    #================================
+    if args.khan_academy == "ka-lite":
+            install_kalite() or die("Unable to install KA-Lite.")
+    
+    #================================
+    # install the kiwix server (but not content)
+    #================================
+    install_kiwix()
+    
+    #================================
+    # Change pi user login password 
+    #================================
+    if not is_vagrant():
+        sudo("sh -c 'echo pi:" + base_passwd + "| chpasswd'") or die("Unable to change 'pi' password.")
+    
+    #================================
+    # Update hostname (LAST!)
+    #================================
+    if not is_vagrant():
+        cp("files/hosts", "/etc/hosts") or die("Unable to copy hosts file.")
+        cp("files/hostname", "/etc/hostname") or die("Unable to copy hostname file.")
+    
+    #================================
+    # record the version of the installer we're using - this must be manually
+    # updated when you tag a new installer
+    #================================
+    sudo("sh -c 'echo " + base_build + " > /etc/elimupi-installer-version'") or die("Unable to record ELIMUPI version.")
+    
+    #================================
+    # Final messages
+    #================================
+    print "ELIMUPI image has been successfully created."
+    print "It can be accessed at: http://" + base_ip + "/"
 
-#================================
-# Install components 
-#================================
-install_php() or die("Unable to install php.")
-install_apache() or die("Unable to install Apache.")
-install_mysql() or die("Unable to install mysql.")
-install_sqlite() or die("Unable to install sqlite.")
-install_citadel() or die("Unable to install Citadel.")
+############################################
+#    Main code start
+############################################
+print '--------------------------------------------------------------------------'
+print 'Platform : ' + platform.platform()   # Platform : Linux-4.9.41-v7+-armv7l-with-debian-9.1
+print 'System   : ' + platform.system()     # System   : Linux
+print 'Release  : ' + platform.release()    # Release  : 4.9.41-v7+
+print 'Version  : ' + platform.version()    # Version  : #1023 SMP Tue Aug 8 16:00:15 BST 2017
+print '--------------------------------------------------------------------------'
+if os.path.isfile(base_build + '_install'):
+    print "Continue install after reboot"
+    # get phase
+    install_phase = open(base_build + '_install').read()
+     
+else: 
+    install_phase = 0
 
-#================================
-# Install web frontend (For now Rachel!!!)
-#================================
-#sudo("rm -fr /var/www") or die("Unable to delete existing default web application (/var/www).")
-#sudo("git clone --depth 1 https://github.com/rachelproject/contentshell /var/www") or die("Unable to download RACHEL web application.")
-#sudo("chown -R www-data.www-data /var/www") or die("Unable to set permissions on RACHEL web application (/var/www).")
-#sudo("sh -c \"umask 0227; echo 'www-data ALL=(ALL) NOPASSWD: /sbin/shutdown' >> /etc/sudoers.d/www-shutdown\"") or die("Unable to add www-data to sudoers for web shutdown")
-#sudo("usermod -a -G adm www-data") or die("Unable to add www-data to adm group (so stats.php can read logs)")
+print "Install phase: " + install_phase
 
-#================================
-# KAHN academy (optional)
-#================================
-if args.khan_academy == "ka-lite":
-        install_kalite() or die("Unable to install KA-Lite.")
+if install_phase == 0:
+    PHASE0()
+elif ifinstall_phase == 1:
+    PHASE1()
+else: 
+    print "Invallid installer state"
 
-#================================
-# install the kiwix server (but not content)
-#================================
-install_kiwix()
-
-#================================
-# Change pi user login password 
-#================================
-if not is_vagrant():
-    sudo("sh -c 'echo pi:" + base_passwd + "| chpasswd'") or die("Unable to change 'pi' password.")
-
-#================================
-# Update hostname (LAST!)
-#================================
-if not is_vagrant():
-    cp("files/hosts", "/etc/hosts") or die("Unable to copy hosts file.")
-    cp("files/hostname", "/etc/hostname") or die("Unable to copy hostname file.")
-
-#================================
-# record the version of the installer we're using - this must be manually
-# updated when you tag a new installer
-#================================
-sudo("sh -c 'echo " + base_build + " > /etc/elimupi-installer-version'") or die("Unable to record ELIMUPI version.")
-
-#================================
-# Final messages
-#================================
-print "ELIMUPI image has been successfully created."
-print "It can be accessed at: http://" + base_ip + "/"
