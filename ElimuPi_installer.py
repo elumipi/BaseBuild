@@ -402,11 +402,11 @@ def homedir():
 # Are we running a local installer
 #================================
 def localinstaller():
-    print "Basedir:" + basedir() + "/files"
-    print "Exist : " + exists( basedir() + "/files")
     if exists( basedir() + "/files"):
+        print "Local installer"
         return True
     else:
+        print "GIT installer"
         return False 
     
 #================================
