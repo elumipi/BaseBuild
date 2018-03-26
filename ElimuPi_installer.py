@@ -28,7 +28,7 @@ base_user           = "pi"                                          # Default us
 base_passwd         = "elimupi"                                     # Default password for all services
 base_ip_range       = "10.11.0"                                     # IP range (/24) for the WiFI interface
 base_ip             = "10.11.0.1"                                   # Default IP address for the WiFi interface
-base_build          = "ELIMUPI-20180326-2"                            # Date of build
+base_build          = "ELIMUPI-20180326-3"                            # Date of build
 base_git            = "https://github.com/elumipi/BaseBuild.git"    # Git location
 
 installed_modules   = [];                   # Installed modules
