@@ -402,8 +402,8 @@ def homedir():
 # Are we running a local installer
 #================================
 def localinstaller():
-    print basedir() + "/files"
-    print exists( basedir() + "/files")
+    print "Basedir:" + basedir() + "/files"
+    print "Exist : " + exists( basedir() + "/files")
     if exists( basedir() + "/files"):
         return True
     else:
