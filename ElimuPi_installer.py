@@ -28,7 +28,7 @@ base_user           = "pi"                                          # Default us
 base_passwd         = "elimupi"                                     # Default password for all services
 base_ip_range       = "10.11.0"                                     # IP range (/24) for the WiFI interface
 base_ip             = "10.11.0.1"                                   # Default IP address for the WiFi interface
-base_build          = "ELIMUPI-20180322"                            # Date of build
+base_build          = "ELIMUPI-20180326"                            # Date of build
 base_git            = "https://github.com/elumipi/BaseBuild.git"    # Git location
 
 installed_modules   = [];                   # Installed modules
@@ -403,9 +403,9 @@ def homedir():
 #================================
 def localinstaller():
     if exists( basedir() + "/files"):
-        return False
+        return True
     else:
-        return True 
+        return False 
     
 #================================
 # Copy command
@@ -472,13 +472,13 @@ def PHASE0():
     #================================
     # Clone the GIT repo.
     #================================
-    if not localinstaller():
+    if localinstaller():
+        print "Using local files "
+    else:
         print "Fetching files from GIT to " + basedir() 
         sudo("rm -fr " + basedir() + "/files")  
         # NOTE GIT is still old name; needs rebranding
         cmd("git clone --depth 1 " + base_git + " " + basedir() ) or die("Unable to clone Elimu installer repository.")
-    else:
-        print "Using local files "
             
     #================================
     # Make installer autorun
