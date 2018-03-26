@@ -28,7 +28,7 @@ base_user           = "pi"                                          # Default us
 base_passwd         = "elimupi"                                     # Default password for all services
 base_ip_range       = "10.11.0"                                     # IP range (/24) for the WiFI interface
 base_ip             = "10.11.0.1"                                   # Default IP address for the WiFi interface
-base_build          = "ELIMUPI-20180326-3"                            # Date of build
+base_build          = "ELIMUPI-20180326-4"                            # Date of build
 base_git            = "https://github.com/elumipi/BaseBuild.git"    # Git location
 
 installed_modules   = [];                   # Installed modules
@@ -611,7 +611,7 @@ if os.path.isfile(base_build + '_install'):
     install_phase = open(base_build + '_install').read()
      
 else: 
-    install_phase = 0
+    install_phase = "0"
 
 print '--------------------------------------------------------------------------'
 print 'ElimuPi build : ' + base_build                   # Build version
@@ -621,11 +621,11 @@ print 'OS Release    : ' + platform.release()           # Release  : 4.9.41-v7+
 print 'OS Version    : ' + platform.version()           # Version  : #1023 SMP Tue Aug 8 16:00:15 BST 2017
 print "Install phase : (" + str(install_phase) + ")"    # Installer phase
 print '--------------------------------------------------------------------------'
-if install_phase == 0:
+if install_phase == "0":
     if not yes_or_no("Do you want to install the ElimuPi build"):
         die('Installation aborted')
     PHASE0()
-elif install_phase == 1:
+elif install_phase == "1":
     if not yes_or_no("Do you want to continue the ElimuPi build"):
         die('Installation aborted')
     PHASE1()
