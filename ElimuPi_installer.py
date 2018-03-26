@@ -28,7 +28,7 @@ base_user           = "pi"                                          # Default us
 base_passwd         = "elimupi"                                     # Default password for all services
 base_ip_range       = "10.11.0"                                     # IP range (/24) for the WiFI interface
 base_ip             = "10.11.0.1"                                   # Default IP address for the WiFi interface
-base_build          = "ELIMUPI-20180326-5"                            # Date of build
+base_build          = "ELIMUPI-20180326-6"                            # Date of build
 base_git            = "https://github.com/elumipi/BaseBuild.git"    # Git location
 
 installed_modules   = [];                   # Installed modules
@@ -233,7 +233,7 @@ def install_wifi():
     sudo("sh -c 'echo \"interface    wlan0        #default: eth0\" >>/etc/udhcpd.conf'")                                                or die("Unable to write to udhcpd.conf6")
     sudo("sh -c 'echo \"#     \" >>/etc/udhcpd.conf'")                                                                                  or die("Unable to write to udhcpd.conf7")
     sudo("sh -c 'echo \"# The maximim number of leases (includes addressesd reserved\" >>/etc/udhcpd.conf'")                            or die("Unable to write to udhcpd.conf8")
-    sudo("sh -c 'echo \"# by OFFER's, DECLINE's, and ARP conficts\" >>/etc/udhcpd.conf'")                                               or die("Unable to write to udhcpd.conf9")
+    sudo("sh -c 'echo \"# by OFFER\'s, DECLINE\'s, and ARP conficts\" >>/etc/udhcpd.conf'")                                               or die("Unable to write to udhcpd.conf9")
     sudo("sh -c 'echo \"#     \" >>/etc/udhcpd.conf'")                                                                                  or die("Unable to write to udhcpd.conf10")
     sudo("sh -c 'echo \"#     #max_leases    254        #default: 254\" >>/etc/udhcpd.conf'")                                           or die("Unable to write to udhcpd.conf11")
     sudo("sh -c 'echo \"#     \" >>/etc/udhcpd.conf'")                                                                                  or die("Unable to write to udhcpd.conf12")
@@ -271,10 +271,10 @@ def install_wifi():
     sudo("sh -c 'echo \"#siaddr        192.168.0.22        #default: 0.0.0.0\" >>/etc/udhcpd.conf'")                                    or die("Unable to write to udhcpd.conf44")
     sudo("sh -c 'echo \"#sname        zorak            #default: \(none\)\" >>/etc/udhcpd.conf'")                                       or die("Unable to write to udhcpd.conf45")
     sudo("sh -c 'echo \"#boot_file    /var/nfs_root        #default: \(none\)\" >>/etc/udhcpd.conf'")                                   or die("Unable to write to udhcpd.conf46")
-    sudo("sh -c 'echo \"# The remainer of options are DHCP options and can be specifed with the\" >>/etc/udhcpd.conf'")                 or die("Unable to write to udhcpd.conf47")
-    sudo("sh -c 'echo \"# keyword 'opt' or 'option'. If an option can take multiple items, such\" >>/etc/udhcpd.conf'")                 or die("Unable to write to udhcpd.conf48")
+    sudo("sh -c 'echo \"# The remainder of options are DHCP options and can be specifed with the\" >>/etc/udhcpd.conf'")                 or die("Unable to write to udhcpd.conf47")
+    sudo("sh -c 'echo \"# keyword \'opt\' or \'option\'. If an option can take multiple items, such\" >>/etc/udhcpd.conf'")                 or die("Unable to write to udhcpd.conf48")
     sudo("sh -c 'echo \"# as the dns option, they can be listed on the same line, or multiple\" >>/etc/udhcpd.conf'")                   or die("Unable to write to udhcpd.conf49")
-    sudo("sh -c 'echo \"# lines. The only option with a default is 'lease'.\" >>/etc/udhcpd.conf'")                                     or die("Unable to write to udhcpd.conf50")
+    sudo("sh -c 'echo \"# lines. The only option with a default is \'lease\'.\" >>/etc/udhcpd.conf'")                                     or die("Unable to write to udhcpd.conf50")
     sudo("sh -c 'echo \"opt    dns    8.8.8.8 8.8.4.4 # Google Public DNS servers\" >>/etc/udhcpd.conf'")                               or die("Unable to write to udhcpd.conf51")
     sudo("sh -c 'echo \" option    subnet    255.255.255.0\" >>/etc/udhcpd.conf'")                                                      or die("Unable to write to udhcpd.conf52")
     sudo("sh -c 'echo \"opt    router    " + base_ip + "\" >>/etc/udhcpd.conf'")                                                        or die("Unable to write to udhcpd.conf53")
