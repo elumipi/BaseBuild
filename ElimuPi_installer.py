@@ -9,7 +9,7 @@
 #    2017-Jun-28 | PVe   | Updated base configuration
 #    2018-Feb-28 | PVe   | Added more modular design
 #    2018-Mar-15 | PBo   | Bug fixes
-#
+#    2018-Mar-26 | PVe   | Updated files handling
 #=========================================================================================================
 import sys
 import os
@@ -382,29 +382,47 @@ def is_vagrant():
     return os.path.isfile("/etc/is_vagrant_vm")
 
 #================================
-# basedir
+# base directory
 #================================
 def basedir():
     bindir = os.path.dirname(os.path.realpath(sys.argv[0]))     # Should be initial folder where install is started 
     if not bindir:
         bindir = "."
-    if exists(bindir + "/files"):                   # Started from local fileset
-        return bindir
     else:
-        return bindir + "/elimupi_installer"        # Started from GIT
+        return bindir           
 
+#================================
+# Home directory
+#================================
+def homedir():
+    home = os.path.dirname(os.path.realpath(expanduser("~")))
+    return home
+
+#================================
+# Are we running a local installer
+#================================
+def localinstaller():
+    if exists( basedir() + "/files"):
+        return False
+    else:
+        return True 
+    
 #================================
 # Copy command
 #================================    
 def cp(s, d):
     return sudo("cp %s/%s %s" % (basedir(), s, d))
 
+#================================
 # Install the USB automounter functionality
+#================================
 def install_usb_mounter():
     sudo("apt-get -y install usbmount") or die("Unable install usbmount.")
     return True
 
+#================================
 # Check if we have a WiFi device
+#================================
 def wifi_present():
     if is_vagrant():
         return False
@@ -454,24 +472,25 @@ def PHASE0():
     #================================
     # Clone the GIT repo.
     #================================
-    if basedir()[-17:] == "elimupi_installer":       # check if GIT install
-        print "Fetching files from GIT to " + basedir()
-        sudo("rm -fr " + basedir())  
+    if not localinstaller():
+        print "Fetching files from GIT to " + basedir() 
+        sudo("rm -fr " + basedir() + "/files")  
         # NOTE GIT is still old name; needs rebranding
-        cmd("git clone --depth 1 " + base_git + " " + basedir()) or die("Unable to clone Elimu installer repository.")
-        cmd('chmod 700 ' + basedir() + '/ElimuPi_installer.py') or die("Unable to set ElimuPi installer script permissions.")
+        cmd("git clone --depth 1 " + base_git + " " + basedir() ) or die("Unable to clone Elimu installer repository.")
     else:
         print "Using local files "
-        
+            
     #================================
     # Make installer autorun
     #================================
-    if not basedir() + '/ElimuPi_installer.py' in open('.bashrc').read():
+    if not basedir() + '/ElimuPi_installer.py' in open(homedir() + '/.bashrc').read():
         # Add to startup
-        file = open('.bashrc', 'a')
+        file = open(homedir() + '/.bashrc', 'a')
         file.write( basedir() + '/ElimuPi_installer.py')       # Enable autostart on logon
         file.close()
         print "Autostart enabled"
+    else:
+        print "Autostart already enabled"
 
     #================================
     # Write install status to file
@@ -582,7 +601,6 @@ def PHASE1():
 ############################################
 #    Main code start
 ############################################
-
 if os.path.isfile(base_build + '_install'):
     print "Continue install after reboot"
     # get phase
