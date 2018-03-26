@@ -395,7 +395,7 @@ def basedir():
 # Home directory
 #================================
 def homedir():
-    home = os.path.dirname(os.path.realpath(expanduser("~")))
+    home = os.path.expanduser("~")
     return home
 
 #================================
