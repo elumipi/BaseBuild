@@ -403,17 +403,20 @@ def homedir():
 #================================
 def localinstaller():
     if exists( basedir() + "/files"):
-        print "Local installer, no GIT"
+        print "Local installer, no GIT used"
         return True
     else:
-        print "GIT installer"
+        print "GIT installer needed"
         return False 
     
 #================================
 # Copy command
 #================================    
 def cp(s, d):
-    return sudo("cp %s/%s %s" % (basedir(), s, d))
+    if localinstaller():
+        return sudo("cp %s/%s %s" % (basedir(), s, d))
+    else:
+        return sudo("cp %s/%s %s" % (basedir() + "/build_elimupi", s, d))
 
 #================================
 # Install the USB automounter functionality
@@ -478,15 +481,14 @@ def PHASE0():
         print "Using local files "
     else:
         print "Fetching files from GIT to " + basedir() 
-        sudo("rm -fr " + basedir() + "/files")  
+        sudo("rm -fr " + basedir() + "/build_elimupi")  
         # NOTE GIT is still old name; needs rebranding
-        cmd("git clone --depth 1 " + base_git + " " + basedir() ) or die("Unable to clone Elimu installer repository.")
+        cmd("git clone --depth 1 " + base_git + " " + basedir() + "/build_elimupi") or die("Unable to clone Elimu installer repository.")
             
     #================================
     # Make installer autorun
     #================================
     if not basedir() + '/ElimuPi_installer.py' in open(homedir() + '/.bashrc').read():
-        # Add to startup
         file = open(homedir() + '/.bashrc', 'a')
         file.write( basedir() + '/ElimuPi_installer.py')       # Enable autostart on logon
         file.close()
