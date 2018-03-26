@@ -225,7 +225,7 @@ def install_wifi():
     # PVe correctly write the udhcp config file
     # cp("files/udhcpd.conf", "/etc/udhcpd.conf") or die("Unable to copy uDHCPd configuration (udhcpd.conf)")
     
-    sudo("sh -c 'echo \"# Sample udhcpd configuration file (/etc/udhcpd.conf)\" >/etc/udhcpd.conf'")                                    or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# Sample udhcpd configuration file \(/etc/udhcpd.conf\)\" >/etc/udhcpd.conf'")                                    or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"# The start and end of the IP lease block\" >>/etc/udhcpd.conf'")                                               or die("Unable to write to udhcpd.conf") 
     sudo("sh -c 'echo \"start        " + base_ip_range + ".11    #default: 192.168.0.20\" >>/etc/udhcpd.conf'")                         or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"end        " + base_ip_range + ".199    #default: 192.168.0.254\" >>/etc/udhcpd.conf'")                         or die("Unable to write to udhcpd.conf")
@@ -247,17 +247,17 @@ def install_wifi():
     sudo("sh -c 'echo \"# The time period at which udhcpd will write out a dhcpd.leases\" >>/etc/udhcpd.conf'")                         or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"# file. If this is 0, udhcpd will never automatically write a\" >>/etc/udhcpd.conf'")                           or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"# lease file. (specified in seconds)\" >>/etc/udhcpd.conf'")                                                    or die("Unable to write to udhcpd.conf")
-    sudo("sh -c 'echo \"#auto_time    7200        #default: 7200 (2 hours)\" >>/etc/udhcpd.conf'")                                      or die("Unable to write to udhcpd.conf")
-    sudo("sh -c 'echo \"# The amount of time that an IP will be reserved (leased) for if a\" >>/etc/udhcpd.conf'")                      or die("Unable to write to udhcpd.conf")
-    sudo("sh -c 'echo \"# DHCP decline message is received (seconds).\" >>/etc/udhcpd.conf'")                                           or die("Unable to write to udhcpd.conf")
-    sudo("sh -c 'echo \"#decline_time    3600        #default: 3600 (1 hour)\" >>/etc/udhcpd.conf'")                                    or die("Unable to write to udhcpd.conf")
-    sudo("sh -c 'echo \"# The amount of time that an IP will be reserved (leased) for if an\" >>/etc/udhcpd.conf'")                     or die("Unable to write to udhcpd.conf")
-    sudo("sh -c 'echo \"# ARP conflct occurs. (seconds\" >>/etc/udhcpd.conf'")                                                          or die("Unable to write to udhcpd.conf")
-    sudo("sh -c 'echo \"#conflict_time    3600        #default: 3600 (1 hour)\" >>/etc/udhcpd.conf'")                                   or die("Unable to write to udhcpd.conf")
-    sudo("sh -c 'echo \"# How long an offered address is reserved (leased) in seconds\" >>/etc/udhcpd.conf'")                           or die("Unable to write to udhcpd.conf")
-    sudo("sh -c 'echo \"#offer_time    60        #default: 60 (1 minute)\" >>/etc/udhcpd.conf'")                                        or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#auto_time    7200        #default: 7200 \(2 hours\)\" >>/etc/udhcpd.conf'")                                      or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# The amount of time that an IP will be reserved \(leased\) for if a\" >>/etc/udhcpd.conf'")                      or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# DHCP decline message is received \(seconds\).\" >>/etc/udhcpd.conf'")                                           or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#decline_time    3600        #default: 3600 \(1 hour\)\" >>/etc/udhcpd.conf'")                                    or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# The amount of time that an IP will be reserved \(leased\) for if an\" >>/etc/udhcpd.conf'")                     or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# ARP conflct occurs. \(seconds\)\" >>/etc/udhcpd.conf'")                                                          or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#conflict_time    3600        #default: 3600 \(1 hour\)\" >>/etc/udhcpd.conf'")                                   or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# How long an offered address is reserved \(leased\) in seconds\" >>/etc/udhcpd.conf'")                           or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#offer_time    60        #default: 60 \(1 minute\)\" >>/etc/udhcpd.conf'")                                        or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"# If a lease to be given is below this value, the full lease time is\" >>/etc/udhcpd.conf'")                    or die("Unable to write to udhcpd.conf")
-    sudo("sh -c 'echo \"# instead used (seconds).\" >>/etc/udhcpd.conf'")                                                               or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"# instead used \(seconds\).\" >>/etc/udhcpd.conf'")                                                               or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"#min_lease    60        #defult: 60\" >>/etc/udhcpd.conf'")                                                     or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"# The location of the leases file\" >>/etc/udhcpd.conf'")                                                       or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"#lease_file    /var/lib/misc/udhcpd.leases    #defualt: /var/lib/misc/udhcpd.leases\" >>/etc/udhcpd.conf'")     or die("Unable to write to udhcpd.conf")
@@ -265,12 +265,12 @@ def install_wifi():
     sudo("sh -c 'echo \"#pidfile    /var/run/udhcpd.pid    #default: /var/run/udhcpd.pid\" >>/etc/udhcpd.conf'")                        or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"# Everytime udhcpd writes a leases file, the below script will be called.\" >>/etc/udhcpd.conf'")               or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"# Useful for writing the lease file to flash every few hours.\" >>/etc/udhcpd.conf'")                           or die("Unable to write to udhcpd.conf")
-    sudo("sh -c 'echo \"#notify_file                #default: (no script)\" >>/etc/udhcpd.conf'")                                       or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#notify_file                #default: \(no script\)\" >>/etc/udhcpd.conf'")                                       or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"#notify_file    dumpleases    # <--- useful for debugging\" >>/etc/udhcpd.conf'")                               or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"# The following are bootp specific options, setable by udhcpd.\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"#siaddr        192.168.0.22        #default: 0.0.0.0\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
-    sudo("sh -c 'echo \"#sname        zorak            #default: (none)\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
-    sudo("sh -c 'echo \"#boot_file    /var/nfs_root        #default: (none)\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#sname        zorak            #default: \(none\)\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
+    sudo("sh -c 'echo \"#boot_file    /var/nfs_root        #default: \(none\)\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"# The remainer of options are DHCP options and can be specifed with the\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"# keyword 'opt' or 'option'. If an option can take multiple items, such\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
     sudo("sh -c 'echo \"# as the dns option, they can be listed on the same line, or multiple\" >>/etc/udhcpd.conf'") or die("Unable to write to udhcpd.conf")
@@ -439,6 +439,11 @@ def wifi_present():
 ############################################
 def PHASE0():
     #================================
+    # Ask to continue
+    #================================
+    if not yes_or_no("Do you want to install the ElimuPi build"):
+        die('Installation aborted')
+    #================================
     # Check if on Linux and debian (requirement for ElimuPi)
     #================================
     if platform.system() != 'Linux': 
@@ -517,6 +522,11 @@ def PHASE0():
 # PHASE 1 install
 ############################################
 def PHASE1():
+    #================================
+    # Ask to continue
+    #================================
+    if not yes_or_no("Do you want to continue the install the ElimuPi build"):
+        die('Installation aborted')
     #================================
     # Update Raspi firmware
     #================================
@@ -619,15 +629,11 @@ print 'Platform      : ' + platform.platform()          # Platform : Linux-4.9.4
 print 'System        : ' + platform.system()            # System   : Linux
 print 'OS Release    : ' + platform.release()           # Release  : 4.9.41-v7+
 print 'OS Version    : ' + platform.version()           # Version  : #1023 SMP Tue Aug 8 16:00:15 BST 2017
-print "Install phase : (" + str(install_phase) + ")"    # Installer phase
+print "Install phase : (" + install_phase + ")"    # Installer phase
 print '--------------------------------------------------------------------------'
-if install_phase == "0":
-    if not yes_or_no("Do you want to install the ElimuPi build"):
-        die('Installation aborted')
+if   install_phase == "0":
     PHASE0()
 elif install_phase == "1":
-    if not yes_or_no("Do you want to continue the ElimuPi build"):
-        die('Installation aborted')
     PHASE1()
 else: 
     print "Invallid installer state"
