@@ -30,7 +30,7 @@ base_passwd         = "elimupi"                                     # Default pa
 base_ip_range       = "10.11.0"                                     # IP range (/24) for the WiFI interface
 base_ip             = "10.11.0.1"                                   # Default IP address for the WiFi interface
 base_subnet         = "255.255.255.0"                               # Base subnet
-base_build          = "ELIMUPI-20180404-1"                          # Date of build
+base_build          = "ELIMUPI-20180404-2"                          # Date of build
 base_git            = "https://github.com/elumipi/BaseBuild.git"    # Git location
 
 installed_modules   = [];                   # Installed modules
