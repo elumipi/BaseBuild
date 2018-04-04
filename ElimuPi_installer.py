@@ -272,7 +272,7 @@ def install_network():
     print "========================================="
     cp("files/interfaces", "/etc/network/interfaces") or die("Unable to copy network interface configuration (interfaces)")
     sudo("sed -i '/address/c\address      " + base_ip + "' /etc/network/interfaces") or die("Unable to update uDHCPd configuration (udhcpd.conf)")
-    sudo("sed -i '/netmask/c\netmask      " + base_ip_netmask + "' /etc/network/interfaces") or die("Unable to update uDHCPd configuration (udhcpd.conf)")
+    sudo("sed -i '/netmask/c\netmask      " + base_subnet + "' /etc/network/interfaces") or die("Unable to update uDHCPd configuration (udhcpd.conf)")
     return True
 
 #################################
