@@ -200,9 +200,9 @@ def install_apache():
     # Install stemming
     sudo("wget https://pecl.php.net/get/stem-1.5.1.tgz") or die("Unable to download kiwix-server")
     sudo("tar -xvf stem-1.5.1.tgz -C stem")
-    sudo("wget -O patch.file https://bugs.php.net/patch-display.php?bug_id=71631&patch=update-for-php7&revision=1456823887&download=1")
-    sudo("patch -p1 < patch.file")
-    sudo("md5sum stem.c")
+    sudo("wget -O patch.file https://bugs.php.net/patch-display.php?bug_id=71631&patch=update-for-php7&revision=1456823887&download=1") or die("Unable to get patch for STEM")
+    sudo("patch -p1 < patch.file") or die("Unable to patch Stem")
+    sudo("md5sum stem.c") or die ("Unable to calculate checksum for stem.c")
     ## check package.xml <file md5sum="ee8c88ec8b8f06f686fcebdffe744b08" name="stem.c" role="src" />
     # add the corrected checksum
     sudo("sed -i \"s/<file md5sum=\\\"*\\\" name=\\\"stem.c\\\" role=\\\"src\\\" \\/>/<file md5sum=\\\"ee8c88ec8b8f06f686fcebdffe744b08\\\" name=\\\"stem.c\\\" role=\\\"src\\\" \\/>/\" p.xml")
