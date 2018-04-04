@@ -198,7 +198,7 @@ def install_apache():
     print "========================================="
     sudo("yes '' | sudo pecl install -f stem") or die("Unable to install php stemmer")
     # Install stemming
-    sudo("wget https://pecl.php.net/get/stem-1.5.1.tgz") or die("Unable to download kiwix-server")
+    sudo("wget -O stem-1.5.1.tgz https://pecl.php.net/get/stem-1.5.1.tgz") or die("Unable to download kiwix-server")
     sudo("tar -xvf stem-1.5.1.tgz -C stem")
     sudo("wget -O patch.file https://bugs.php.net/patch-display.php?bug_id=71631&patch=update-for-php7&revision=1456823887&download=1") or die("Unable to get patch for STEM")
     sudo("patch -p1 < patch.file") or die("Unable to patch Stem")
