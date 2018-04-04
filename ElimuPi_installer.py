@@ -144,7 +144,8 @@ def install_php():
     print "========================================="
     print "Installing PHP"
     print "========================================="
-    sudo("sudo apt-get -y install libxml2-dev") or die("Unable to install libXml2.")
+    sudo("sudo apt-get -y install libxml2") or die("Unable to install libXml2.")
+    sudo("sudo apt-get -y install libxml2") or die("Unable to install libXml2.")
     sudo("sudo apt-get -y install php7.0") or die("Unable to install php7.0.")
     sudo("sudo apt-get -y install php7.0-common") or die("Unable to install php7.0-common.")
     sudo("sudo apt-get -y install php7.0-dev ") or die("Unable to install php7.0-dev.")
@@ -174,6 +175,9 @@ def install_mysql():
 # Install sqlite
 #================================
 def install_sqlite():
+    print "========================================="
+    print "Installing SQLLite"
+    print "========================================="
     ## PBo 20180313-04<    sudo("sudo apt-get -y sqlite3") or die("Unable to install sqlite3")
     sudo("sudo apt-get install -y sqlite3") or die("Unable to install sqlite3")
     return True 
@@ -183,11 +187,15 @@ def install_sqlite():
 #================================
 def install_apache():
     print "========================================="
-    print "Installing Apache platform run #3 (PBo) "
+    print "Installing Apache platform"
     print "========================================="
     sudo("sudo apt-get -y install apache2 libxml2-dev") or die("Unable to install Apache.")
     sudo("sudo apt-get -y install libapache2-mod-php7.0") or die("Unable to install libapache2-mod-php7.0.")
     sudo("sudo apt-get -y install php7.0-cgi") or die("Unable to install php7.0-cgi.")
+    
+    print "========================================="
+    print "Installing Stemming files"
+    print "========================================="
     sudo("yes '' | sudo pecl install -f stem") or die("Unable to install php stemmer")
     # Install stemming
     sudo("wget https://pecl.php.net/get/stem-1.5.1.tgz") or die("Unable to download kiwix-server")
@@ -200,6 +208,9 @@ def install_apache():
     sudo("sed -i \"s/<file md5sum=\\\"*\\\" name=\\\"stem.c\\\" role=\\\"src\\\" \\/>/<file md5sum=\\\"ee8c88ec8b8f06f686fcebdffe744b08\\\" name=\\\"stem.c\\\" role=\\\"src\\\" \\/>/\" p.xml")
     sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php/7.0/cli/php.ini'") or die("Unable to install stemmer CLI config")
     sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php/7.0/apache2/php.ini'") or die("Unable to install stemmer Apache config")
+    print "========================================="
+    print "Config Apache"
+    print "========================================="
     sudo("sh -c 'sed -i \"s/upload_max_filesize *= *.*/upload_max_filesize = 512M/\" /etc/php/7.0/apache2/php.ini'") or die("Unable to increase upload_max_filesize in apache2/php.ini")
     sudo("sh -c 'sed -i \"s/post_max_size *= *.*/post_max_size = 512M/\" /etc/php/7.0/apache2/php.ini'") or die("Unable to increase post_max_size in apache2/php.ini")
     sudo("service apache2 stop") or die("Unable to stop Apache2.")
@@ -219,6 +230,9 @@ def install_apache():
 # Setup WiFi
 #================================
 def install_wifi():
+    print "========================================="
+    print "Install and Configure WiFi"
+    print "========================================="
     sudo("apt-get -y install hostapd udhcpd") or die("Unable install hostapd and udhcpd.")
     cp("files/udhcpd.conf", "/etc/udhcpd.conf") or die("Unable to copy uDHCPd configuration (udhcpd.conf)")
     # Update to defined settings
@@ -247,6 +261,18 @@ def install_wifi():
     sudo("sh -c 'echo ifconfig wlan0 "+ base_ip + " >> /etc/rc.local; echo service udhcpd restart >> /etc/rc.local;'") or die("Unable to setup udhcpd reset at boot.")
     sudo("sh -c 'echo exit 0 >> /etc/rc.local'") or die("Unable to replace exit to end of /etc/rc.local")
     #sudo("ifdown eth0 && ifdown wlan0 && ifup eth0 && ifup wlan0") or die("Unable to restart network interfaces.")
+    return True
+
+#================================
+# Setup Network
+#================================
+def install_network():
+    print "========================================="
+    print "Installing Network settings"
+    print "========================================="
+    cp("files/interfaces", "/etc/network/interfaces") or die("Unable to copy network interface configuration (interfaces)")
+    sudo("sed -i '/address/c\address      " + base_ip + "' /etc/network/interfaces") or die("Unable to update uDHCPd configuration (udhcpd.conf)")
+    sudo("sed -i '/netmask/c\netmask      " + base_ip_netmask + "' /etc/network/interfaces") or die("Unable to update uDHCPd configuration (udhcpd.conf)")
     return True
 
 #################################
@@ -294,6 +320,13 @@ def die(d):
     sys.exit(1)
 
 #================================
+# Abort installer script
+#================================
+def abort(d):
+    print "Aborted: " + str(d)
+    sys.exit(1)
+
+#================================
 # check if is virtual environment 
 #================================
 def is_vagrant():
@@ -321,18 +354,18 @@ def homedir():
 #================================
 def localinstaller():
     if exists( basedir() + "/files"):
-        print "Local installer, no GIT used"
         return True
     else:
-        print "GIT installer needed"
         return False 
     
 #================================
 # Check for PI version
 #================================
 def getpiversion():
+    # --------------------------
     # Extract board revision from cpuinfo file
     # List of revisions from : https://www.raspberrypi-spy.co.uk/2012/09/checking-your-raspberry-pi-board-version/
+    # --------------------------
     myrevision = "0000"
     try:
         f = open('/proc/cpuinfo','r')
@@ -340,9 +373,12 @@ def getpiversion():
             if line[0:8]=='Revision':
                 length=len(line)
                 myrevision = line[11:length-1]
-                f.close()
+        f.close()
     except:
-        myrevision = "0000"
+         myrevision = "0000"
+    # --------------------------
+    # Check for known models
+    # --------------------------    
     if   myrevision == "0002":                    model = "Model B Rev 1"
     elif myrevision == "0003":                    model = "Model B Rev 1"
     elif myrevision == "0004":                    model = "Model B Rev 2"
@@ -406,7 +442,7 @@ def PHASE0():
     # Ask to continue
     #================================
     if not yes_or_no("Do you want to install the ElimuPi build"):
-        die('Installation aborted')
+        abort('Installation aborted')
     #================================
     # Check if on Linux and debian (requirement for ElimuPi)
     #================================
@@ -490,7 +526,13 @@ def PHASE1():
     # Ask to continue
     #================================
     if not yes_or_no("Do you want to continue the install the ElimuPi build"):
-        die('Installation aborted')
+        abort('Installation aborted')
+        
+    #================================
+    # Get latest package info 
+    #================================
+    sudo("apt-get update -y") or die("Unable to update.")
+    
     #================================
     # Update Raspi firmware
     #================================
@@ -512,7 +554,7 @@ def PHASE1():
     # Setup LAN
     #================================
     if not is_vagrant():
-        cp("files/interfaces", "/etc/network/interfaces") or die("Unable to copy network interface configuration (interfaces)")
+        install_network() or die("Unable to install Network settings.")
     
     #================================
     # Extra wifi driver configuration
