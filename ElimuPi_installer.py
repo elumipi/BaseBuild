@@ -10,6 +10,7 @@
 #    2018-Feb-28 | PVe   | Added more modular design
 #    2018-Mar-15 | PBo   | Bug fixes
 #    2018-Mar-26 | PVe   | Updated files handling
+#    2018-Apr-04 | PVe   | Updated file update mechanism
 #=========================================================================================================
 import sys
 import os
@@ -28,7 +29,8 @@ base_user           = "pi"                                          # Default us
 base_passwd         = "elimupi"                                     # Default password for all services
 base_ip_range       = "10.11.0"                                     # IP range (/24) for the WiFI interface
 base_ip             = "10.11.0.1"                                   # Default IP address for the WiFi interface
-base_build          = "ELIMUPI-20180326-6"                            # Date of build
+base_subnet         = "255.255.255.0"                               # Base subnet
+base_build          = "ELIMUPI-20180404-1"                          # Date of build
 base_git            = "https://github.com/elumipi/BaseBuild.git"    # Git location
 
 installed_modules   = [];                   # Installed modules
@@ -64,7 +66,6 @@ def USB_automount():
 def install_kalite():
     sudo("apt-get install -y python-pip") or die("Unable to install pip.")
     sudo("pip install --no-cache-dir ka-lite-static") or die("Unable to install KA-Lite")   
-    
     sudo("kalite manage setup --username=" + base_passwd + " --password=" + base_passwd + " --hostname=" + base_hostname + " --description=" + base_hostname) ### PBo 20180315 Removed unwanted confirmation  
     sudo("mkdir -p /etc/ka-lite") or die("Unable to create /etc/ka-lite configuration directory.")
     cp("files/init-functions", "/etc/default/ka-lite") or die("Unable to install KA-Lite configuration script.")
@@ -75,7 +76,6 @@ def install_kalite():
         sudo("mkdir -p /etc/systemd/system/ka-lite.service.d") or die("Unable to create KA-Lite service options directory.")
         cp("files/init-systemd-conf", "/etc/systemd/system/ka-lite.service.d/10-extend-timeout.conf") or die("Unable to increase KA-Lite service startup timeout.")
     sudo("update-rc.d ka-lite defaults") or die("Unable to register the KA-Lite service.")
-
     ##  PBo 20180313-06 Start with systemctl < sudo("service ka-lite start") or die("Unable to start the KA-Lite service.")
     sudo("systemctl restart ka-lite") or die("Unable to start the KA-Lite service.")
     sudo("sh -c '/usr/local/bin/kalite --version > /etc/kalite-version'") or die("Unable to record kalite version")
@@ -166,10 +166,8 @@ def install_mysql():
     sudo("sudo echo mysql-server mysql-server/root_password password " + base_passwd +  " | sudo debconf-set-selections") or die("Unable to set default MySQL password.")
     sudo("sudo echo mysql-server mysql-server/root_password_again password " + base_passwd + " | sudo debconf-set-selections") or die("Unable to set default MySQL password (again).")
     installed_modules.extend(['mysql'])
-
     ## PBo 20180313-02 From install_apache
     cp("files/my.cnf", "/etc/mysql/my.cnf") or die("Unable to copy MySQL server configuration.")
-
     return True
 
 #================================
@@ -222,93 +220,12 @@ def install_apache():
 #================================
 def install_wifi():
     sudo("apt-get -y install hostapd udhcpd") or die("Unable install hostapd and udhcpd.")
-    # PVe correctly write the udhcp config file
-    # cp("files/udhcpd.conf", "/etc/udhcpd.conf") or die("Unable to copy uDHCPd configuration (udhcpd.conf)")
-    
-    sudo("sh -c 'echo \"# Sample udhcpd configuration file \(/etc/udhcpd.conf\)\" >/etc/udhcpd.conf'")                                  or die("Unable to write to udhcpd.conf1")
-    sudo("sh -c 'echo \"# The start and end of the IP lease block\" >>/etc/udhcpd.conf'")                                               or die("Unable to write to udhcpd.conf2") 
-    sudo("sh -c 'echo \"start        " + base_ip_range + ".11    #default: 192.168.0.20\" >>/etc/udhcpd.conf'")                         or die("Unable to write to udhcpd.conf3")
-    sudo("sh -c 'echo \"end        " + base_ip_range + ".199    #default: 192.168.0.254\" >>/etc/udhcpd.conf'")                         or die("Unable to write to udhcpd.conf4")
-    sudo("sh -c 'echo \"# The interface that udhcpd will use\" >>/etc/udhcpd.conf'")                                                    or die("Unable to write to udhcpd.conf5")
-    sudo("sh -c 'echo \"interface    wlan0        #default: eth0\" >>/etc/udhcpd.conf'")                                                or die("Unable to write to udhcpd.conf6")
-    sudo("sh -c 'echo \"#     \" >>/etc/udhcpd.conf'")                                                                                  or die("Unable to write to udhcpd.conf7")
-    sudo("sh -c 'echo \"# The maximim number of leases (includes addressesd reserved\" >>/etc/udhcpd.conf'")                            or die("Unable to write to udhcpd.conf8")
-    sudo("sh -c 'echo \"# by OFFER\'s, DECLINE\'s, and ARP conficts\" >>/etc/udhcpd.conf'")                                               or die("Unable to write to udhcpd.conf9")
-    sudo("sh -c 'echo \"#     \" >>/etc/udhcpd.conf'")                                                                                  or die("Unable to write to udhcpd.conf10")
-    sudo("sh -c 'echo \"#     #max_leases    254        #default: 254\" >>/etc/udhcpd.conf'")                                           or die("Unable to write to udhcpd.conf11")
-    sudo("sh -c 'echo \"#     \" >>/etc/udhcpd.conf'")                                                                                  or die("Unable to write to udhcpd.conf12")
-    sudo("sh -c 'echo \"#     \" >>/etc/udhcpd.conf'")                                                                                  or die("Unable to write to udhcpd.conf13")
-    sudo("sh -c 'echo \"# If remaining is true (default), udhcpd will store the time\" >>/etc/udhcpd.conf'")                            or die("Unable to write to udhcpd.conf14")
-    sudo("sh -c 'echo \"# remaining for each lease in the udhcpd leases file. This is\" >>/etc/udhcpd.conf'")                           or die("Unable to write to udhcpd.conf15")
-    sudo("sh -c 'echo \"# for embedded systems that cannot keep time between reboots.\" >>/etc/udhcpd.conf'")                           or die("Unable to write to udhcpd.conf16")
-    sudo("sh -c 'echo \"# If you set remaining to no, the absolute time that the lease\" >>/etc/udhcpd.conf'")                          or die("Unable to write to udhcpd.conf17")
-    sudo("sh -c 'echo \"# expires at will be stored in the dhcpd.leases file.\" >>/etc/udhcpd.conf'")                                   or die("Unable to write to udhcpd.conf18")
-    sudo("sh -c 'echo \"remaining    yes        #default: yes\" >>/etc/udhcpd.conf'")                                                   or die("Unable to write to udhcpd.conf19")
-    sudo("sh -c 'echo \"# The time period at which udhcpd will write out a dhcpd.leases\" >>/etc/udhcpd.conf'")                         or die("Unable to write to udhcpd.conf20")
-    sudo("sh -c 'echo \"# file. If this is 0, udhcpd will never automatically write a\" >>/etc/udhcpd.conf'")                           or die("Unable to write to udhcpd.conf21")
-    sudo("sh -c 'echo \"# lease file. (specified in seconds)\" >>/etc/udhcpd.conf'")                                                    or die("Unable to write to udhcpd.conf22")
-    sudo("sh -c 'echo \"#auto_time    7200        #default: 7200 \(2 hours\)\" >>/etc/udhcpd.conf'")                                    or die("Unable to write to udhcpd.conf23")
-    sudo("sh -c 'echo \"# The amount of time that an IP will be reserved \(leased\) for if a\" >>/etc/udhcpd.conf'")                    or die("Unable to write to udhcpd.conf24")
-    sudo("sh -c 'echo \"# DHCP decline message is received \(seconds\).\" >>/etc/udhcpd.conf'")                                         or die("Unable to write to udhcpd.conf25")
-    sudo("sh -c 'echo \"#decline_time    3600        #default: 3600 \(1 hour\)\" >>/etc/udhcpd.conf'")                                  or die("Unable to write to udhcpd.conf26")
-    sudo("sh -c 'echo \"# The amount of time that an IP will be reserved \(leased\) for if an\" >>/etc/udhcpd.conf'")                   or die("Unable to write to udhcpd.conf27")
-    sudo("sh -c 'echo \"# ARP conflct occurs. \(seconds\)\" >>/etc/udhcpd.conf'")                                                       or die("Unable to write to udhcpd.conf28")
-    sudo("sh -c 'echo \"#conflict_time    3600        #default: 3600 \(1 hour\)\" >>/etc/udhcpd.conf'")                                 or die("Unable to write to udhcpd.conf29")
-    sudo("sh -c 'echo \"# How long an offered address is reserved \(leased\) in seconds\" >>/etc/udhcpd.conf'")                         or die("Unable to write to udhcpd.conf30")
-    sudo("sh -c 'echo \"#offer_time    60        #default: 60 \(1 minute\)\" >>/etc/udhcpd.conf'")                                      or die("Unable to write to udhcpd.conf31")
-    sudo("sh -c 'echo \"# If a lease to be given is below this value, the full lease time is\" >>/etc/udhcpd.conf'")                    or die("Unable to write to udhcpd.conf32")
-    sudo("sh -c 'echo \"# instead used \(seconds\).\" >>/etc/udhcpd.conf'")                                                             or die("Unable to write to udhcpd.conf33")
-    sudo("sh -c 'echo \"#min_lease    60        #defult: 60\" >>/etc/udhcpd.conf'")                                                     or die("Unable to write to udhcpd.conf34")
-    sudo("sh -c 'echo \"# The location of the leases file\" >>/etc/udhcpd.conf'")                                                       or die("Unable to write to udhcpd.conf35")
-    sudo("sh -c 'echo \"#lease_file    /var/lib/misc/udhcpd.leases    #defualt: /var/lib/misc/udhcpd.leases\" >>/etc/udhcpd.conf'")     or die("Unable to write to udhcpd.conf36")
-    sudo("sh -c 'echo \"# The location of the pid file\" >>/etc/udhcpd.conf'")                                                          or die("Unable to write to udhcpd.conf37")
-    sudo("sh -c 'echo \"#pidfile    /var/run/udhcpd.pid    #default: /var/run/udhcpd.pid\" >>/etc/udhcpd.conf'")                        or die("Unable to write to udhcpd.conf38")
-    sudo("sh -c 'echo \"# Everytime udhcpd writes a leases file, the below script will be called.\" >>/etc/udhcpd.conf'")               or die("Unable to write to udhcpd.conf39")
-    sudo("sh -c 'echo \"# Useful for writing the lease file to flash every few hours.\" >>/etc/udhcpd.conf'")                           or die("Unable to write to udhcpd.conf40")
-    sudo("sh -c 'echo \"#notify_file                #default: \(no script\)\" >>/etc/udhcpd.conf'")                                     or die("Unable to write to udhcpd.conf41")
-    sudo("sh -c 'echo \"#notify_file    dumpleases    # <--- useful for debugging\" >>/etc/udhcpd.conf'")                               or die("Unable to write to udhcpd.conf42")
-    sudo("sh -c 'echo \"# The following are bootp specific options, setable by udhcpd.\" >>/etc/udhcpd.conf'")                          or die("Unable to write to udhcpd.conf43")
-    sudo("sh -c 'echo \"#siaddr        192.168.0.22        #default: 0.0.0.0\" >>/etc/udhcpd.conf'")                                    or die("Unable to write to udhcpd.conf44")
-    sudo("sh -c 'echo \"#sname        zorak            #default: \(none\)\" >>/etc/udhcpd.conf'")                                       or die("Unable to write to udhcpd.conf45")
-    sudo("sh -c 'echo \"#boot_file    /var/nfs_root        #default: \(none\)\" >>/etc/udhcpd.conf'")                                   or die("Unable to write to udhcpd.conf46")
-    sudo("sh -c 'echo \"# The remainder of options are DHCP options and can be specifed with the\" >>/etc/udhcpd.conf'")                 or die("Unable to write to udhcpd.conf47")
-    sudo("sh -c 'echo \"# keyword \'opt\' or \'option\'. If an option can take multiple items, such\" >>/etc/udhcpd.conf'")                 or die("Unable to write to udhcpd.conf48")
-    sudo("sh -c 'echo \"# as the dns option, they can be listed on the same line, or multiple\" >>/etc/udhcpd.conf'")                   or die("Unable to write to udhcpd.conf49")
-    sudo("sh -c 'echo \"# lines. The only option with a default is \'lease\'.\" >>/etc/udhcpd.conf'")                                     or die("Unable to write to udhcpd.conf50")
-    sudo("sh -c 'echo \"opt    dns    8.8.8.8 8.8.4.4 # Google Public DNS servers\" >>/etc/udhcpd.conf'")                               or die("Unable to write to udhcpd.conf51")
-    sudo("sh -c 'echo \" option    subnet    255.255.255.0\" >>/etc/udhcpd.conf'")                                                      or die("Unable to write to udhcpd.conf52")
-    sudo("sh -c 'echo \"opt    router    " + base_ip + "\" >>/etc/udhcpd.conf'")                                                        or die("Unable to write to udhcpd.conf53")
-    sudo("sh -c 'echo \"#opt    wins    192.168.10.10\" >>/etc/udhcpd.conf'")                                                           or die("Unable to write to udhcpd.conf54")
-    sudo("sh -c 'echo \"option    domain    local\" >>/etc/udhcpd.conf'")                                                               or die("Unable to write to udhcpd.conf55")
-    sudo("sh -c 'echo \"option    lease    864000        # 10 days of seconds\" >>/etc/udhcpd.conf'")                                   or die("Unable to write to udhcpd.conf56")
-    sudo("sh -c 'echo \"# Currently supported options, for more info, see options.c\" >>/etc/udhcpd.conf'")                             or die("Unable to write to udhcpd.conf57")
-    sudo("sh -c 'echo \"#opt subnet\" >>/etc/udhcpd.conf'")                                                                             or die("Unable to write to udhcpd.conf58")
-    sudo("sh -c 'echo \"#opt timezone\" >>/etc/udhcpd.conf'")                                                                           or die("Unable to write to udhcpd.conf59")
-    sudo("sh -c 'echo \"#opt router\" >>/etc/udhcpd.conf'")                                                                             or die("Unable to write to udhcpd.conf60")
-    sudo("sh -c 'echo \"#opt timesrv\" >>/etc/udhcpd.conf'")                                                                            or die("Unable to write to udhcpd.conf61")
-    sudo("sh -c 'echo \"#opt namesrv\" >>/etc/udhcpd.conf'")                                                                            or die("Unable to write to udhcpd.conf62")
-    sudo("sh -c 'echo \"#opt dns\" >>/etc/udhcpd.conf'")                                                                                or die("Unable to write to udhcpd.conf63")
-    sudo("sh -c 'echo \"#opt logsrv\" >>/etc/udhcpd.conf'")                                                                             or die("Unable to write to udhcpd.conf64")
-    sudo("sh -c 'echo \"#opt cookiesrv\" >>/etc/udhcpd.conf'")                                                                          or die("Unable to write to udhcpd.conf65")
-    sudo("sh -c 'echo \"#opt lprsrv\" >>/etc/udhcpd.conf'")                                                                             or die("Unable to write to udhcpd.conf66")
-    sudo("sh -c 'echo \"#opt bootsize\" >>/etc/udhcpd.conf'")                                                                           or die("Unable to write to udhcpd.conf67")
-    sudo("sh -c 'echo \"#opt domain\" >>/etc/udhcpd.conf'")                                                                             or die("Unable to write to udhcpd.conf68")
-    sudo("sh -c 'echo \"#opt swapsrv\" >>/etc/udhcpd.conf'")                                                                            or die("Unable to write to udhcpd.conf69")
-    sudo("sh -c 'echo \"#opt rootpath\" >>/etc/udhcpd.conf'")                                                                           or die("Unable to write to udhcpd.conf70")
-    sudo("sh -c 'echo \"#opt ipttl\" >>/etc/udhcpd.conf'")                                                                              or die("Unable to write to udhcpd.conf71")
-    sudo("sh -c 'echo \"#opt mtu\" >>/etc/udhcpd.conf'")                                                                                or die("Unable to write to udhcpd.conf72")
-    sudo("sh -c 'echo \"#opt broadcast\" >>/etc/udhcpd.conf'")                                                                          or die("Unable to write to udhcpd.conf73")
-    sudo("sh -c 'echo \"#opt wins\" >>/etc/udhcpd.conf'")                                                                               or die("Unable to write to udhcpd.conf74")
-    sudo("sh -c 'echo \"#opt lease\" >>/etc/udhcpd.conf'")                                                                              or die("Unable to write to udhcpd.conf75")
-    sudo("sh -c 'echo \"#opt ntpsrv\" >>/etc/udhcpd.conf'")                                                                             or die("Unable to write to udhcpd.conf76")
-    sudo("sh -c 'echo \"#opt tftp\" >>/etc/udhcpd.conf'")                                                                               or die("Unable to write to udhcpd.conf77")
-    sudo("sh -c 'echo \"#opt bootfile\" >>/etc/udhcpd.conf'")                                                                           or die("Unable to write to udhcpd.conf78")
-    sudo("sh -c 'echo \"#opt wpad\" >>/etc/udhcpd.conf'")                                                                               or die("Unable to write to udhcpd.conf79")
-#     
-    sudo("sh -c 'echo \"# Static leases map\" >>/etc/udhcpd.conf'")                                                                     or die("Unable to write to udhcpd.conf80")
-    sudo("sh -c 'echo \"#static_lease 00:60:08:11:CE:4E 192.168.0.54\" >>/etc/udhcpd.conf'")                                            or die("Unable to write to udhcpd.conf81")
-    sudo("sh -c 'echo \"#static_lease 00:60:08:11:CE:3E 192.168.0.44\" >>/etc/udhcpd.conf'")                                            or die("Unable to write to udhcpd.conf82")
-    # End of writing config
+    cp("files/udhcpd.conf", "/etc/udhcpd.conf") or die("Unable to copy uDHCPd configuration (udhcpd.conf)")
+    # Update to defined settings
+    sudo("sed -i '/start/c\start        " + base_ip_range + ".11    #default: 192.168.0.20\' /etc/udhcpd.conf") or die("Unable to update uDHCPd configuration (udhcpd.conf)") 
+    sudo("sed -i '/end/c\end        " + base_ip_range + ".199    #default: 192.168.0.254\' /etc/udhcpd.conf") or die("Unable to update uDHCPd configuration (udhcpd.conf)")
+    sudo("sed -i '/^option.*subnet/c\option    subnet    " + base_subnet + "' /etc/udhcpd.conf") or die("Unable to update uDHCPd configuration (udhcpd.conf)")
+    sudo("sed -i '/^opt.*router/c\opt    router    " + base_ip + "' /etc/udhcpd.conf") or die("Unable to update uDHCPd configuration (udhcpd.conf)")
     
     cp("files/udhcpd", "/etc/default/udhcpd") or die("Unable to copy UDHCPd configuration (udhcpd)")
     cp("files/hostapd", "/etc/default/hostapd") or die("Unable to copy hostapd configuration (hostapd)")
@@ -331,6 +248,7 @@ def install_wifi():
     sudo("sh -c 'echo exit 0 >> /etc/rc.local'") or die("Unable to replace exit to end of /etc/rc.local")
     #sudo("ifdown eth0 && ifdown wlan0 && ifup eth0 && ifup wlan0") or die("Unable to restart network interfaces.")
     return True
+
 #################################
 # Support functions
 #################################
@@ -409,6 +327,52 @@ def localinstaller():
         print "GIT installer needed"
         return False 
     
+#================================
+# Check for PI version
+#================================
+def getpiversion():
+    # Extract board revision from cpuinfo file
+    # List of revisions from : https://www.raspberrypi-spy.co.uk/2012/09/checking-your-raspberry-pi-board-version/
+    myrevision = "0000"
+    try:
+        f = open('/proc/cpuinfo','r')
+        for line in f:
+            if line[0:8]=='Revision':
+                length=len(line)
+                myrevision = line[11:length-1]
+                f.close()
+    except:
+        myrevision = "0000"
+    if   myrevision == "0002":                    model = "Model B Rev 1"
+    elif myrevision == "0003":                    model = "Model B Rev 1"
+    elif myrevision == "0004":                    model = "Model B Rev 2"
+    elif myrevision == "0005":                    model = "Model B Rev 2"
+    elif myrevision == "0006":                    model = "Model B Rev 2"
+    elif myrevision == "0007":                    model = "Model A"
+    elif myrevision == "0008":                    model = "Model A"
+    elif myrevision == "0009":                    model = "Model A"
+    elif myrevision == "000d":                    model = "Model B Rev 2A"
+    elif myrevision == "000e":                    model = "Model B Rev 2A"
+    elif myrevision == "000f":                    model = "Model B Rev 2A"
+    elif myrevision == "0010":                    model = "Model B+"
+    elif myrevision == "0013":                    model = "Model B+"
+    elif myrevision == "900032":                  model = "Model B+"
+    elif myrevision == "0011":                    model = "Compute Module"
+    elif myrevision == "0014":                    model = "Compute Module"
+    elif myrevision == "0012":                    model = "Model A+"
+    elif myrevision == "0015":                    model = "Model A+"
+    elif myrevision == "a01041":                  model = "Pi 2 Model B v1.1"
+    elif myrevision == "a21041":                  model = "Pi 2 Model B v1.1"
+    elif myrevision == "a22042":                  model = "Pi 2 Model B v1.2"
+    elif myrevision == "900092":                  model = "Pi Zero v1.2"
+    elif myrevision == "900093":                  model = "Pi Zero v1.3"
+    elif myrevision == "9000C1":                  model = "Pi Zero W"
+    elif myrevision == "a02082":                  model = "Pi 3 Model B"
+    elif myrevision == "a22082  (Embest, China)": model = "Pi 3 Model B"
+    elif myrevision == "a020d3 (Sony, UK)":       model = "Pi 3 Model B+"
+    else:                                         model = "Unknown (" + myrevision + ")"
+    return model
+  
 #================================
 # Copy command
 #================================    
@@ -625,11 +589,12 @@ else:
 
 print '--------------------------------------------------------------------------'
 print 'ElimuPi build : ' + base_build                   # Build version
+print 'Hardware      : ' + getpiversion()               # Model of the PI
 print 'Platform      : ' + platform.platform()          # Platform : Linux-4.9.41-v7+-armv7l-with-debian-9.1
 print 'System        : ' + platform.system()            # System   : Linux
 print 'OS Release    : ' + platform.release()           # Release  : 4.9.41-v7+
 print 'OS Version    : ' + platform.version()           # Version  : #1023 SMP Tue Aug 8 16:00:15 BST 2017
-print "Install phase : (" + install_phase + ")"    # Installer phase
+print "Install phase : (" + install_phase + ")"         # Installer phase
 print '--------------------------------------------------------------------------'
 if   install_phase == "0":
     PHASE0()
