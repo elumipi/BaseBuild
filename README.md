@@ -46,6 +46,8 @@ All default username and passwords will be elimupi/elimupi unless noted differen
 *NOTE2: for WIFI to work on the RaspberryPi 2 unit, you must have the WIFI USB dongle inserted
 during installation so that the install script can configure it properly. RaspberryPi 3 models have on board WiFi and don't need a WIFI USB dongle.
 
-Last updated : 2017/12/6 
+Last updated : 2018/04/06 
+
+Applicable Licenses: See licenses file.
 
 Original source : https://github.com/rachelproject/rachelpios
