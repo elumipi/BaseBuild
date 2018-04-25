@@ -11,6 +11,7 @@
 #    2018-Mar-15 | PBo   | Bug fixes
 #    2018-Mar-26 | PVe   | Updated files handling
 #    2018-Apr-04 | PVe   | Updated file update mechanism
+#    2018-Apr-25 | PVe   | Minor change, make STEM compilation optional
 #=========================================================================================================
 import sys
 import os
