@@ -97,7 +97,6 @@ def install_kiwix():
     cp("files/init-kiwix-service", "/etc/init.d/kiwix") or die("Unable to install kiwix service")
     sudo("chmod +x /etc/init.d/kiwix") or die("Unable to set permissions on kiwix service.")
     sudo("update-rc.d kiwix defaults") or die("Unable to register the kiwix service.")
-    sudo("sed -i 's/dean-kiwix-start.pl/dean-kiwix-start.pl/g' /etc/init.d/kiwix") or die("Unable to change /etc/init.d/kiwix")    ## PBo 20180312-07
     sudo("systemctl daemon-reload") or die("systemctl daemon reload failed")
     sudo("systemctl start kiwix") or die("Unable to start the kiwix service")
 
