@@ -10,7 +10,7 @@
 # Required-Stop:
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: kiwix server, browse installed RACHEL zim files on port 81
+# Short-Description: kiwix server, browse installed DEAN zim files on port 81
 ### END INIT INFO
 
 set -e
@@ -26,14 +26,14 @@ PATH=/bin:/usr/bin:/sbin:/usr/sbin
 
 case "$1" in
   start)
-    /var/kiwix/bin/rachel-kiwix-start.pl
+    /var/kiwix/bin/dean-kiwix-start.pl
     ;;
   stop)
     killall kiwix-serve
     ;;
   restart)
     # it kills the old process itself
-    /var/kiwix/bin/rachel-kiwix-start.pl
+    /var/kiwix/bin/dean-kiwix-start.pl
     ;;
   status)
     ps aux | grep kiwix-serve | grep -v grep

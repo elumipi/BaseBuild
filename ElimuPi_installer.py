@@ -201,13 +201,15 @@ def install_apache():
     sudo("wget -O stem-1.5.1.tgz https://pecl.php.net/get/stem-1.5.1.tgz") or die("Unable to download kiwix-server")
     sudo("tar -xvf stem-1.5.1.tgz -C stem")
     sudo("wget -O patch.file https://bugs.php.net/patch-display.php?bug_id=71631&patch=update-for-php7&revision=1456823887&download=1") or die("Unable to get patch for STEM")
-    sudo("patch -p1 < patch.file") or die("Unable to patch Stem")
-    sudo("md5sum stem.c") or die ("Unable to calculate checksum for stem.c")
-    ## check package.xml <file md5sum="ee8c88ec8b8f06f686fcebdffe744b08" name="stem.c" role="src" />
-    # add the corrected checksum
-    sudo("sed -i \"s/<file md5sum=\\\"*\\\" name=\\\"stem.c\\\" role=\\\"src\\\" \\/>/<file md5sum=\\\"ee8c88ec8b8f06f686fcebdffe744b08\\\" name=\\\"stem.c\\\" role=\\\"src\\\" \\/>/\" p.xml")
-    sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php/7.0/cli/php.ini'") or die("Unable to install stemmer CLI config")
-    sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php/7.0/apache2/php.ini'") or die("Unable to install stemmer Apache config")
+    if yes_or_no("Compile STEM (y/n)"):
+        sudo("patch -p1 < patch.file") or die("Unable to patch Stem")
+        sudo("md5sum stem.c") or die ("Unable to calculate checksum for stem.c")
+        ## check package.xml <file md5sum="ee8c88ec8b8f06f686fcebdffe744b08" name="stem.c" role="src" />
+        # add the corrected checksum
+        sudo("sed -i \"s/<file md5sum=\\\"*\\\" name=\\\"stem.c\\\" role=\\\"src\\\" \\/>/<file md5sum=\\\"ee8c88ec8b8f06f686fcebdffe744b08\\\" name=\\\"stem.c\\\" role=\\\"src\\\" \\/>/\" p.xml")
+        sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php/7.0/cli/php.ini'") or die("Unable to install stemmer CLI config")
+        sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php/7.0/apache2/php.ini'") or die("Unable to install stemmer Apache config")
+    
     print "========================================="
     print "Config Apache"
     print "========================================="
@@ -273,6 +275,8 @@ def install_network():
     cp("files/interfaces", "/etc/network/interfaces") or die("Unable to copy network interface configuration (interfaces)")
     sudo("sed -i '/address/c\address      " + base_ip + "' /etc/network/interfaces") or die("Unable to update uDHCPd configuration (udhcpd.conf)")
     sudo("sed -i '/netmask/c\netmask      " + base_subnet + "' /etc/network/interfaces") or die("Unable to update uDHCPd configuration (udhcpd.conf)")
+    # Refresh DHCP address 
+    sudo("dhclient -v eth0") or die ("Unable to get DHCP address")
     return True
 
 #################################
