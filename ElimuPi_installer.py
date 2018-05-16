@@ -11,6 +11,7 @@
 #    2018-Mar-15 | PBo   | Bug fixes
 #    2018-Mar-26 | PVe   | Updated files handling
 #    2018-Apr-04 | PVe   | Updated file update mechanism
+#    2018-Apr-25 | PVe   | Minor change, make STEM compilation optional
 #=========================================================================================================
 import sys
 import os
@@ -110,7 +111,7 @@ def install_kiwix():
 def install_citadel():
     print "Installing CitaDel mail solution"
     ## PBo 20180313 Install with -y < sudo("sudo apt-get install citadel-suite")
-    sudo("sudo apt-get install -y citadel-suite")
+    sudo("apt-get install -y citadel-suite")
     # Installation steps
     return True
 
@@ -143,14 +144,14 @@ def install_php():
     print "========================================="
     print "Installing PHP"
     print "========================================="
-    sudo("sudo apt-get -y install libxml2") or die("Unable to install libXml2.")
-    sudo("sudo apt-get -y install libxml2") or die("Unable to install libXml2.")
-    sudo("sudo apt-get -y install php7.0") or die("Unable to install php7.0.")
-    sudo("sudo apt-get -y install php7.0-common") or die("Unable to install php7.0-common.")
-    sudo("sudo apt-get -y install php7.0-dev ") or die("Unable to install php7.0-dev.")
-    sudo("sudo apt-get -y install php-pear ") or die("Unable to install php-pear.")
+    sudo("apt-get -y install libxml2") or die("Unable to install libXml2.")
+    sudo("apt-get -y install libxml2") or die("Unable to install libXml2.")
+    sudo("apt-get -y install php7.0") or die("Unable to install php7.0.")
+    sudo("apt-get -y install php7.0-common") or die("Unable to install php7.0-common.")
+    sudo("apt-get -y install php7.0-dev ") or die("Unable to install php7.0-dev.")
+    sudo("apt-get -y install php-pear ") or die("Unable to install php-pear.")
     #mysql related modules
-    sudo("sudo apt-get -y install php7.0-mysql sqlite3 php7.0-sqlite3") or die("Unable to install web platform.")
+    sudo("apt-get -y install php7.0-mysql sqlite3 php7.0-sqlite3") or die("Unable to install web platform.")
     installed_modules.extend(['php'])
     return True
 
@@ -161,10 +162,10 @@ def install_mysql():
     print "========================================="
     print "Installing MySQL platform"
     print "========================================="
-    sudo("sudo apt-get -y install mysql-server") or die("Unable to install mysql server.")
-    sudo("sudo apt-get -y install mysql-client") or die("Unable to install mysql client.")
-    sudo("sudo echo mysql-server mysql-server/root_password password " + base_passwd +  " | sudo debconf-set-selections") or die("Unable to set default MySQL password.")
-    sudo("sudo echo mysql-server mysql-server/root_password_again password " + base_passwd + " | sudo debconf-set-selections") or die("Unable to set default MySQL password (again).")
+    sudo("apt-get -y install mysql-server") or die("Unable to install mysql server.")
+    sudo("apt-get -y install mysql-client") or die("Unable to install mysql client.")
+    sudo("echo mysql-server mysql-server/root_password password " + base_passwd +  " | sudo debconf-set-selections") or die("Unable to set default MySQL password.")
+    sudo("echo mysql-server mysql-server/root_password_again password " + base_passwd + " | sudo debconf-set-selections") or die("Unable to set default MySQL password (again).")
     installed_modules.extend(['mysql'])
     ## PBo 20180313-02 From install_apache
     cp("files/my.cnf", "/etc/mysql/my.cnf") or die("Unable to copy MySQL server configuration.")
@@ -178,7 +179,7 @@ def install_sqlite():
     print "Installing SQLLite"
     print "========================================="
     ## PBo 20180313-04<    sudo("sudo apt-get -y sqlite3") or die("Unable to install sqlite3")
-    sudo("sudo apt-get install -y sqlite3") or die("Unable to install sqlite3")
+    sudo("apt-get install -y sqlite3") or die("Unable to install sqlite3")
     return True 
 
 #================================
@@ -188,26 +189,25 @@ def install_apache():
     print "========================================="
     print "Installing Apache platform"
     print "========================================="
-    sudo("sudo apt-get -y install apache2 libxml2-dev") or die("Unable to install Apache.")
-    sudo("sudo apt-get -y install libapache2-mod-php7.0") or die("Unable to install libapache2-mod-php7.0.")
-    sudo("sudo apt-get -y install php7.0-cgi") or die("Unable to install php7.0-cgi.")
+    sudo("apt-get -y install apache2 libxml2-dev") or die("Unable to install Apache.")
+    sudo("apt-get -y install libapache2-mod-php7.0") or die("Unable to install libapache2-mod-php7.0.")
+    sudo("apt-get -y install php7.0-cgi") or die("Unable to install php7.0-cgi.")
+    sudo("pecl channel-update pecl.php.net") or die("Unable to update PECL protocol")
     
     print "========================================="
     print "Installing Stemming files"
     print "========================================="
-    sudo("yes '' | sudo pecl install -f stem") or die("Unable to install php stemmer")
-    # Install stemming
     sudo("wget -O stem-1.5.1.tgz https://pecl.php.net/get/stem-1.5.1.tgz") or die("Unable to download kiwix-server")
-    sudo("tar -xvf stem-1.5.1.tgz -C stem")
-    sudo("wget -O patch.file https://bugs.php.net/patch-display.php?bug_id=71631&patch=update-for-php7&revision=1456823887&download=1") or die("Unable to get patch for STEM")
-    if yes_or_no("Compile STEM (y/n)"):
-        sudo("patch -p1 < patch.file") or die("Unable to patch Stem")
-        sudo("md5sum stem.c") or die ("Unable to calculate checksum for stem.c")
-        ## check package.xml <file md5sum="ee8c88ec8b8f06f686fcebdffe744b08" name="stem.c" role="src" />
-        # add the corrected checksum
-        sudo("sed -i \"s/<file md5sum=\\\"*\\\" name=\\\"stem.c\\\" role=\\\"src\\\" \\/>/<file md5sum=\\\"ee8c88ec8b8f06f686fcebdffe744b08\\\" name=\\\"stem.c\\\" role=\\\"src\\\" \\/>/\" p.xml")
-        sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php/7.0/cli/php.ini'") or die("Unable to install stemmer CLI config")
-        sudo("sh -c 'echo \'extension=stem.so\' >> /etc/php/7.0/apache2/php.ini'") or die("Unable to install stemmer Apache config")
+    sudo("mkdir stem") or die ("Unable to create stem folder")
+    sudo("tar -xvf stem-1.5.1.tgz -C stem") or die("Unable to extract stem source files")
+    sudo("wget -O patch.file 'https://bugs.php.net/patch-display.php?bug_id=71631&patch=update-for-php7&revision=1456823887&download=1'") or die("Unable to get patch for STEM")
+    sudo("patch -d stem/stem-1.5.1 -p1 < patch.file") or die("Unable to patch Stem")
+    sudo("cd stem/stem-1.5.1 && phpize") or die("Unable to phpize")
+    sudo("cd stem/stem-1.5.1 && configure") or die("Unable to configure stem files")
+    sudo("cd stem/stem-1.5.1 && make") or die("Unable to make the stem files")
+    sudo("cd stem/stem-1.5.1 && make install") or die("Unable to make install the stem files")
+    sudo("sh -c \'echo extension=stem.so >>/etc/php/7.0/cli/php.ini\'") or die("Unable to install stemmer CLI config")
+    sudo("sh -c \'echo extension=stem.so >>/etc/php/7.0/apache2/php.ini\'") or die("Unable to install stemmer Apache config")
     
     print "========================================="
     print "Config Apache"
@@ -432,7 +432,7 @@ def install_usb_mounter():
 def wifi_present():
     if is_vagrant():
         return False
-    return exists("/sys/class/net/wlan0")
+    return exists("/sys/class/net/wlan0")   # Existance of WiFi interface indicates physical machine
 
 
 ############################################
@@ -509,6 +509,10 @@ def PHASE0():
     file.write('1')                                                     # Write phase to file
     file.close()
     
+    #================================
+    # Set password
+    #================================
+    sudo("passwd ") or die("Unable to set the password")
     #================================
     # Reboot
     #================================
