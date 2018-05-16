@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 #=========================================================================================================
 #    Original script from Rachel
 #    Modified for DEAN ElimuPI
