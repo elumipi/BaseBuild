@@ -202,11 +202,12 @@ def install_apache():
     sudo("mkdir stem") or die ("Unable to create stem folder")
     sudo("tar -xvf stem-1.5.1.tgz -C stem") or die("Unable to extract stem source files")
     sudo("wget -O patch.file 'https://bugs.php.net/patch-display.php?bug_id=71631&patch=update-for-php7&revision=1456823887&download=1'") or die("Unable to get patch for STEM")
+    
     sudo("patch -d stem/stem-1.5.1 -p1 < patch.file") or die("Unable to patch Stem")
-    sudo("cd stem/stem-1.5.1 && phpize") or die("Unable to phpize")
-    sudo("cd stem/stem-1.5.1 && configure") or die("Unable to configure stem files")
-    sudo("cd stem/stem-1.5.1 && make") or die("Unable to make the stem files")
-    sudo("cd stem/stem-1.5.1 && make install") or die("Unable to make install the stem files")
+    sudo("sh -c 'cd \"" + homedir() + "/stem/stem-1.5.1 && phpize\"") or die("Unable to phpize")
+    sudo("sh -c 'cd \"" + homedir() + "/stem/stem-1.5.1 && configure") or die("Unable to configure stem files")
+    sudo("sh -c 'cd \"" + homedir() + "/stem/stem-1.5.1 && make") or die("Unable to make the stem files")
+    sudo("sh -c 'cd \"" + homedir() + "/stem/stem-1.5.1 && make install") or die("Unable to make install the stem files")
     sudo("sh -c \'echo extension=stem.so >>/etc/php/7.0/cli/php.ini\'") or die("Unable to install stemmer CLI config")
     sudo("sh -c \'echo extension=stem.so >>/etc/php/7.0/apache2/php.ini\'") or die("Unable to install stemmer Apache config")
     
