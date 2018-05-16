@@ -4,7 +4,7 @@
 #    Modified for DEAN ElimuPI
 #
 #    Date        |By     | Desxcription
-# ---------------+-------+----------------------------------------
+# --------------+-------+----------------------------------------
 #    2017-Apr-3  | PVe   | Initial fork 
 #    2017-Jun-28 | PVe   | Updated base configuration
 #    2018-Feb-28 | PVe   | Added more modular design
@@ -362,12 +362,11 @@ def localinstaller():
     
 #================================
 # Check for PI version
+#
+# Extract board revision from cpuinfo file
+# List of revisions from : https://www.raspberrypi-spy.co.uk/2012/09/checking-your-raspberry-pi-board-version/
 #================================
 def getpiversion():
-    # --------------------------
-    # Extract board revision from cpuinfo file
-    # List of revisions from : https://www.raspberrypi-spy.co.uk/2012/09/checking-your-raspberry-pi-board-version/
-    # --------------------------
     myrevision = "0000"
     try:
         f = open('/proc/cpuinfo','r')
@@ -378,9 +377,9 @@ def getpiversion():
         f.close()
     except:
          myrevision = "0000"
-    # --------------------------
+    # ==========================
     # Check for known models
-    # --------------------------    
+    # ==========================    
     if   myrevision == "0002":                    model = "Model B Rev 1"
     elif myrevision == "0003":                    model = "Model B Rev 1"
     elif myrevision == "0004":                    model = "Model B Rev 2"
@@ -513,7 +512,7 @@ def PHASE0():
     #================================
     # Set password
     #================================
-    sudo("passwd ") or die("Unable to set the password")
+    sudo("echo \"" + base_user + ":" + base_passwd +"\"| sudo chpasswd ") or die("Unable to set the password")
     #================================
     # Reboot
     #================================
