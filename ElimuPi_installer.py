@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #=========================================================================================================
 #    Original script from Rachel
 #    Modified for DEAN ElimuPI
@@ -202,7 +202,7 @@ def install_apache():
     sudo("mkdir stem") or die ("Unable to create stem folder")
     sudo("tar -xvf stem-1.5.1.tgz -C stem") or die("Unable to extract stem source files")
     sudo("wget -O patch.file 'https://bugs.php.net/patch-display.php?bug_id=71631&patch=update-for-php7&revision=1456823887&download=1'") or die("Unable to get patch for STEM")
-    
+    # Patch and compile
     sudo("patch -d stem/stem-1.5.1 -p1 < patch.file") or die("Unable to patch Stem")
     sudo("sh -c \"cd " + homedir() + "/stem/stem-1.5.1 && phpize\"")  # Disabled as this does not return 0 or die("Unable to phpize")
     sudo("sh -c \"cd " + homedir() + "/stem/stem-1.5.1 && ./configure\"") # Disabled as this does not return 0  or die("Unable to configure stem files")
@@ -210,7 +210,9 @@ def install_apache():
     sudo("sh -c \"cd " + homedir() + "/stem/stem-1.5.1 && make install\"") # Disabled as this does not return 0  or die("Unable to make install the stem files")
     sudo("sh -c \'echo extension=stem.so >>/etc/php/7.0/cli/php.ini\'") or die("Unable to install stemmer CLI config")
     sudo("sh -c \'echo extension=stem.so >>/etc/php/7.0/apache2/php.ini\'") or die("Unable to install stemmer Apache config")
-    
+    # Cleanup
+    sudo("rm -rf stem") or die("Unable to remove STEM sources")
+        
     print "========================================="
     print "Config Apache"
     print "========================================="
@@ -236,9 +238,12 @@ def install_wifi():
     print "========================================="
     print "Install and Configure WiFi"
     print "========================================="
+    sudo("ifconfig wlan0 " + base_ip ) or die("Unable to set wlan0 IP address (" + base_ip + ")")
+    return True
+
     sudo("apt-get -y install hostapd udhcpd") or die("Unable install hostapd and udhcpd.")
     cp("files/udhcpd.conf", "/etc/udhcpd.conf") or die("Unable to copy uDHCPd configuration (udhcpd.conf)")
-    # Update to defined settings
+
     sudo("sed -i '/start/c\start        " + base_ip_range + ".11    #default: 192.168.0.20\' /etc/udhcpd.conf") or die("Unable to update uDHCPd configuration (udhcpd.conf)") 
     sudo("sed -i '/end/c\end        " + base_ip_range + ".199    #default: 192.168.0.254\' /etc/udhcpd.conf") or die("Unable to update uDHCPd configuration (udhcpd.conf)")
     sudo("sed -i '/^option.*subnet/c\option    subnet    " + base_subnet + "' /etc/udhcpd.conf") or die("Unable to update uDHCPd configuration (udhcpd.conf)")
@@ -263,7 +268,7 @@ def install_wifi():
     sudo("sh -c 'sed -i \"s/^exit 0//\" /etc/rc.local'") or die("Unable to remove exit from end of /etc/rc.local")
     sudo("sh -c 'echo ifconfig wlan0 "+ base_ip + " >> /etc/rc.local; echo service udhcpd restart >> /etc/rc.local;'") or die("Unable to setup udhcpd reset at boot.")
     sudo("sh -c 'echo exit 0 >> /etc/rc.local'") or die("Unable to replace exit to end of /etc/rc.local")
-    #sudo("ifdown eth0 && ifdown wlan0 && ifup eth0 && ifup wlan0") or die("Unable to restart network interfaces.")
+    # sudo("ifdown eth0 && ifdown wlan0 && ifup eth0 && ifup wlan0") or die("Unable to restart network interfaces.")
     return True
 
 #================================
