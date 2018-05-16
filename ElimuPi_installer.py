@@ -32,7 +32,7 @@ base_passwd         = "elimupi"                                     # Default pa
 base_ip_range       = "10.11.0"                                     # IP range (/24) for the WiFI interface
 base_ip             = "10.11.0.1"                                   # Default IP address for the WiFi interface
 base_subnet         = "255.255.255.0"                               # Base subnet
-base_build          = "ELIMUPI-20180516-2"                          # Date of build
+base_build          = "ELIMUPI-20180516-3"                          # Date of build
 base_git            = "https://github.com/elumipi/BaseBuild.git"    # Git location
 
 installed_modules   = [];                   # Installed modules
@@ -110,10 +110,10 @@ def install_kiwix():
 #    Citadel MAIL solutiuon 
 #================================
 def install_citadel():
+    print "========================================="
     print "Installing CitaDel mail solution"
-    ## PBo 20180313 Install with -y < sudo("sudo apt-get install citadel-suite")
+    print "========================================="
     sudo("apt-get install -y citadel-suite")
-    # Installation steps
     return True
 
 #================================
@@ -204,10 +204,10 @@ def install_apache():
     sudo("wget -O patch.file 'https://bugs.php.net/patch-display.php?bug_id=71631&patch=update-for-php7&revision=1456823887&download=1'") or die("Unable to get patch for STEM")
     
     sudo("patch -d stem/stem-1.5.1 -p1 < patch.file") or die("Unable to patch Stem")
-    sudo("sh -c 'cd \"" + homedir() + "/stem/stem-1.5.1 && phpize\"") or die("Unable to phpize")
-    sudo("sh -c 'cd \"" + homedir() + "/stem/stem-1.5.1 && configure") or die("Unable to configure stem files")
-    sudo("sh -c 'cd \"" + homedir() + "/stem/stem-1.5.1 && make") or die("Unable to make the stem files")
-    sudo("sh -c 'cd \"" + homedir() + "/stem/stem-1.5.1 && make install") or die("Unable to make install the stem files")
+    sudo("sh -c \"cd " + homedir() + "/stem/stem-1.5.1 && phpize\"")  # Disabled as this does not return 0 or die("Unable to phpize")
+    sudo("sh -c \"cd " + homedir() + "/stem/stem-1.5.1 && ./configure\"") # Disabled as this does not return 0  or die("Unable to configure stem files")
+    sudo("sh -c \"cd " + homedir() + "/stem/stem-1.5.1 && make\"") # Disabled as this does not return 0  or die("Unable to make the stem files")
+    sudo("sh -c \"cd " + homedir() + "/stem/stem-1.5.1 && make install\"") # Disabled as this does not return 0  or die("Unable to make install the stem files")
     sudo("sh -c \'echo extension=stem.so >>/etc/php/7.0/cli/php.ini\'") or die("Unable to install stemmer CLI config")
     sudo("sh -c \'echo extension=stem.so >>/etc/php/7.0/apache2/php.ini\'") or die("Unable to install stemmer Apache config")
     
