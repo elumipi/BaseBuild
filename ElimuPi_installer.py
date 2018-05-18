@@ -32,7 +32,7 @@ base_passwd         = "elimupi"                                     # Default pa
 base_ip_range       = "10.11.0"                                     # IP range (/24) for the WiFI interface
 base_ip             = "10.11.0.1"                                   # Default IP address for the WiFi interface
 base_subnet         = "255.255.255.0"                               # Base subnet
-base_build          = "ELIMUPI-20180516-3"                          # Date of build
+base_build          = "ELIMUPI-20180518-1"                          # Date of build
 base_git            = "https://github.com/elumipi/BaseBuild.git"    # Git location
 
 installed_modules   = [];                   # Installed modules
@@ -196,10 +196,10 @@ def install_apache():
     sudo("pecl channel-update pecl.php.net") or die("Unable to update PECL protocol")
     
     print "========================================="
-    print "Installing Stemming files"
+    print "Creating and Installing Stemming files"
     print "========================================="
-    sudo("wget -O stem-1.5.1.tgz https://pecl.php.net/get/stem-1.5.1.tgz") or die("Unable to download kiwix-server")
-    sudo("mkdir stem") or die ("Unable to create stem folder")
+    sudo("wget -O stem-1.5.1.tgz https://pecl.php.net/get/stem-1.5.1.tgz") or die("Unable to download stem source")
+    sudo("mkdir stem") or die ("Unable to create temp stem folder")
     sudo("tar -xvf stem-1.5.1.tgz -C stem") or die("Unable to extract stem source files")
     sudo("wget -O patch.file 'https://bugs.php.net/patch-display.php?bug_id=71631&patch=update-for-php7&revision=1456823887&download=1'") or die("Unable to get patch for STEM")
     # Patch and compile
