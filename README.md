@@ -12,18 +12,18 @@ THIS IS WORK IN PROGRESS: DO NOT USE!!!!
 
 ## Functions
 This version of the ElimuPi build supports:
-- Secured WiFi access point
-- Local DHCP, DNS
 - FDROID Android application store
 - Web pages for management of the sytem and content management (WordPress)
 - WiKiPedia alike functions (KiWix)
-- Mail and calender functionality (Citadel)
+- Kahn Acadamy learning content  
+- Local Mail and calender functionality (Citadel)
 - Dynamic content addition through USB storage   
- 
+- Optional Secured WiFi access point
+- Optional Local DHCP, DNS 
 ## Installation
 1. Install a base RaspBian image on a SD card and insert it into the RaspberryPi.
 
-2. Create a empty file called 'ssh' in the root of the boot partition
+2. Create a empty file called 'ssh' in the root of the boot partition to enable SSH access to the Raspberry Pi
  
 3. Powerup the RaspberryPi and wait for the initial boot process to complete
 

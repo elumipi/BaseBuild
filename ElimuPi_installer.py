@@ -519,9 +519,6 @@ def PHASE0():
     else:
         print "Fetching files from GIT to " + basedir() 
         sudo("rm -fr " + basedir() + "/build_elimupi")  
-        base_git_inp = raw_input("Git enter is default [" + base_git +"]")
-        if base_git_inp > "":
-            base_git = base_git_inp
         cmd("git clone --depth 1 " + base_git + " " + basedir() + "/build_elimupi") or die("Unable to clone Elimu installer repository.")
             
     #================================
@@ -546,6 +543,7 @@ def PHASE0():
     # Set password
     #================================
     if not is_vagrant():
+        print "Set user password for "+ base_user + " to " + base_passwd 
         sudo("echo \"" + base_user + ":" + base_passwd +"\"| sudo chpasswd ") or die("Unable to set the password")
     
     #================================
