@@ -3,16 +3,17 @@
 #    Original script from Rachel
 #    Modified for DEAN ElimuPI
 #
-#    Date        |By     | Desxcription
-# --------------+-------+----------------------------------------
-#    2017-Apr-3  | PVe   | Initial fork 
-#    2017-Jun-28 | PVe   | Updated base configuration
-#    2018-Feb-28 | PVe   | Added more modular design
-#    2018-Mar-15 | PBo   | Bug fixes
-#    2018-Mar-26 | PVe   | Updated files handling
-#    2018-Apr-04 | PVe   | Updated file update mechanism
-#    2018-Apr-25 | PVe   | Minor change, make STEM compilation optional
-#    2018-May-16 | PVe   | Included STEM compiulation steps to build
+#    Date        |By      | Description
+# ---------------+--------+----------------------------------------
+#    2017-Apr-3  | PVe    | Initial fork 
+#    2017-Jun-28 | PVe    | Updated base configuration
+#    2018-Feb-28 | PVe    | Added more modular design
+#    2018-Mar-15 | PBo    | Bug fixes
+#    2018-Mar-26 | PVe    | Updated files handling
+#    2018-Apr-04 | PVe    | Updated file update mechanism
+#    2018-Apr-25 | PVe    | Minor change, make STEM compilation optional
+#    2018-May-16 | PVe    | Included STEM compilation steps to build
+#    2018-Aug-15 | PVe    |
 #=========================================================================================================
 import sys
 import os
@@ -35,20 +36,20 @@ base_subnet         = "255.255.255.0"                               # Base subne
 base_build          = "ELIMUPI-20180518-1"                          # Date of build
 base_git            = "https://github.com/elumipi/BaseBuild.git"    # Git location
 
-installed_modules   = [];                   # Installed modules
+installed_modules   = [];                                           # Installed modules
 
 #================================
 # Command line arguments
 #================================
 argparser = argparse.ArgumentParser()
 argparser.add_argument( "--khan-academy",
-                       choices=["none", "ka-lite"],
-                       default="ka-lite",
-                       help="Select Khan Academy package to install (default = \"ka-lite\")")
+                        choices=["none", "ka-lite"],
+                        default="ka-lite",
+                        help="Select Khan Academy package to install (default = \"ka-lite\")")
 argparser.add_argument("--no-wifi",
-                       dest="install_wifi",
-                       action="store_false",
-                       help="Do not configure local wifi hotspot.")
+                        dest="install_wifi",
+                        action="store_false",
+                        help="Do not configure local wifi hotspot.")
 args = argparser.parse_args()
 
 #################################
@@ -114,6 +115,7 @@ def install_citadel():
     print "Installing CitaDel mail solution"
     print "========================================="
     sudo("apt-get install -y citadel-suite")
+    sudo("sendcommand \"conf PUTVAL|c_default_cal_zone|Europe/Amsterdam\"") or die("Unable to set Citadel time zone")
     return True
 
 #================================
@@ -173,7 +175,7 @@ def install_mysql():
     return True
 
 #================================
-# Install sqlite
+# Install SQLite
 #================================
 def install_sqlite():
     print "========================================="
@@ -184,17 +186,9 @@ def install_sqlite():
     return True 
 
 #================================
-# Apache installer
+# Stemming sub install
 #================================
-def install_apache():
-    print "========================================="
-    print "Installing Apache platform"
-    print "========================================="
-    sudo("apt-get -y install apache2 libxml2-dev") or die("Unable to install Apache.")
-    sudo("apt-get -y install libapache2-mod-php7.0") or die("Unable to install libapache2-mod-php7.0.")
-    sudo("apt-get -y install php7.0-cgi") or die("Unable to install php7.0-cgi.")
-    sudo("pecl channel-update pecl.php.net") or die("Unable to update PECL protocol")
-    
+def sub_install_stem():
     print "========================================="
     print "Creating and Installing Stemming files"
     print "========================================="
@@ -212,7 +206,22 @@ def install_apache():
     sudo("sh -c \'echo extension=stem.so >>/etc/php/7.0/apache2/php.ini\'") or die("Unable to install stemmer Apache config")
     # Cleanup
     sudo("rm -rf stem") or die("Unable to remove STEM sources")
-        
+    return True
+
+#================================
+# Apache installer
+#================================
+def install_apache():
+    print "========================================="
+    print "Installing Apache platform"
+    print "========================================="
+    sudo("apt-get -y install apache2 libxml2-dev") or die("Unable to install Apache.")
+    sudo("apt-get -y install libapache2-mod-php7.0") or die("Unable to install libapache2-mod-php7.0.")
+    sudo("apt-get -y install php7.0-cgi") or die("Unable to install php7.0-cgi.")
+    sudo("pecl channel-update pecl.php.net") or die("Unable to update PECL protocol")
+    
+    sub_install_stem()
+    
     print "========================================="
     print "Config Apache"
     print "========================================="
@@ -232,9 +241,24 @@ def install_apache():
     return True 
 
 #================================
-# Setup WiFi
+# WiFi installer
 #================================
 def install_wifi():
+    print "========================================="
+    print "Install and Configure WiFi"
+    print "========================================="
+    # Set WiFI IP Address
+    sudo("ifconfig wlan0 " + base_ip ) or die("Unable to set wlan0 IP address (" + base_ip + ")")
+    
+    sudo("apt-get install hostapd") or die ("Unable to install IP tables persistent")
+    sudo("apt-get -y install hostapd isc-dhcp-server") or die("Unable install hostapd and isc-dhcp-server.")
+    sudo("apt-get install iptables-persistent") or die ("Unable to install IP tables persistent")
+    return True
+
+#================================
+# Setup WiFi
+#================================
+def install_wifi2():
     print "========================================="
     print "Install and Configure WiFi"
     print "========================================="
@@ -440,6 +464,12 @@ def wifi_present():
         return False
     return exists("/sys/class/net/wlan0")   # Existance of WiFi interface indicates physical machine
 
+#================================
+# Fix 'strange behaviour in vim (PBo 20180315)
+#================================
+def update_vim_settings():
+    sudo("sed -i  's/set compatible/set nocompatible/g' /etc/vim/vimrc.tiny") or die("Unable to fix vimrc.tiny")
+    return True
 
 ############################################
 # PHASE 0 install
@@ -463,6 +493,7 @@ def PHASE0():
     # Get latest updates 
     #================================
     sudo("apt-get update -y") or die("Unable to update.")
+    sudo("apt-get dist-upgrade -y") or die("Unable to upgrade Raspbian.")
     
     #================================
     # Get latest GIT
@@ -470,37 +501,33 @@ def PHASE0():
     sudo("apt-get install -y git") or die("Unable to install Git.")
     
     #================================
-    # Vargrant
+    # Vargrant build detection (?) 
     #================================
     if is_vagrant():
         sudo("mv /vagrant/sources.list /etc/apt/sources.list")
     
     #================================
-    # Update and upgrade OS
+    # VIM configure
     #================================
-    sudo("apt-get update -y") or die("Unable to update.")
-    sudo("apt-get dist-upgrade -y") or die("Unable to upgrade Raspbian.")
+    update_vim_settings()
     
     #================================
-    # Fix 'strange behaviour in vim (PBo 20180315)
-    #================================
-    sudo("sed -i  's/set compatible/set nocompatible/g' /etc/vim/vimrc.tiny") or die("Unable to fix vimrc.tiny")
-    
-    #================================
-    # Clone the GIT repo.
+    # Clone the GIT repo or use local files.
     #================================
     if localinstaller():
         print "Using local files "
     else:
         print "Fetching files from GIT to " + basedir() 
         sudo("rm -fr " + basedir() + "/build_elimupi")  
-        # NOTE GIT is still old name; needs rebranding
+        base_git_inp = raw_input("Git enter is default [" + base_git +"]")
+        if base_git_inp > "":
+            base_git = base_git_inp
         cmd("git clone --depth 1 " + base_git + " " + basedir() + "/build_elimupi") or die("Unable to clone Elimu installer repository.")
             
     #================================
     # Make installer autorun
     #================================
-    if not basedir() + '/ElimuPi_installer.py' in open(homedir() + '/.bashrc').read():
+    if not 'ElimuPi_installer.py' in open(homedir() + '/.bashrc').read():   #validate if it needs to be added
         file = open(homedir() + '/.bashrc', 'a')
         file.write( basedir() + '/ElimuPi_installer.py')       # Enable autostart on logon
         file.close()
@@ -518,7 +545,9 @@ def PHASE0():
     #================================
     # Set password
     #================================
-    sudo("echo \"" + base_user + ":" + base_passwd +"\"| sudo chpasswd ") or die("Unable to set the password")
+    if not is_vagrant():
+        sudo("echo \"" + base_user + ":" + base_passwd +"\"| sudo chpasswd ") or die("Unable to set the password")
+    
     #================================
     # Reboot
     #================================
@@ -562,18 +591,17 @@ def PHASE1():
         install_wifi() or die("Unable to install WiFi.")
     
     #================================
-    # Setup LAN
-    #================================
-    if not is_vagrant():
-        install_network() or die("Unable to install Network settings.")
-    
-    #================================
     # Extra wifi driver configuration
     #================================
     if wifi_present() and args.install_wifi:
         cp("files/hostapd_RTL8188CUS", "/etc/hostapd/hostapd.conf.RTL8188CUS") or die("Unable to copy RTL8188CUS hostapd configuration.")
         cp("files/hostapd_realtek.conf", "/etc/hostapd/hostapd.conf.realtek") or die("Unable to copy realtek hostapd configuration.")
-        
+    
+    #================================
+    # Setup LAN
+    #================================
+    if not is_vagrant():
+        install_network() or die("Unable to install Network settings.")
     
     #================================
     # Install components 
@@ -603,12 +631,6 @@ def PHASE1():
     # install the kiwix server (but not content)
     #================================
     install_kiwix()
-    
-    #================================
-    # Change pi user login password 
-    #================================
-    if not is_vagrant():
-        sudo("sh -c 'echo pi:" + base_passwd + "| chpasswd'") or die("Unable to change 'pi' password.")
     
     #================================
     # Update hostname (LAST!)
