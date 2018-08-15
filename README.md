@@ -15,7 +15,7 @@ This version of the ElimuPi build supports:
 - FDROID Android application store
 - Web pages for management of the sytem and content management (WordPress)
 - WiKiPedia alike functions (KiWix)
-- Kahn Acadamy learning content  
+- Khan Acadamy learning content  
 - Local Mail and calender functionality (Citadel)
 - Dynamic content addition through USB storage   
 - Optional Secured WiFi access point

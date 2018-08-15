@@ -60,14 +60,19 @@ args = argparser.parse_args()
 #    USB Content management 
 #================================
 def USB_automount():
+    print "========================================="
     print "USB automount handling and web menu"
+    print "========================================="
     return True
 
 #================================
 # Kahn Acadamy content (educational)
 #================================
 def install_kalite():
-    sudo("apt-get install -y python-pip") or die("Unable to install pip.")
+    print "========================================="
+    print "Installing Khan Accedemy components"
+    print "========================================="
+    sudo("apt-get -y install python-pip") or die("Unable to install pip.")
     sudo("pip install --no-cache-dir ka-lite-static") or die("Unable to install KA-Lite")   
     sudo("kalite manage setup --username=" + base_passwd + " --password=" + base_passwd + " --hostname=" + base_hostname + " --description=" + base_hostname) ### PBo 20180315 Removed unwanted confirmation  
     sudo("mkdir -p /etc/ka-lite") or die("Unable to create /etc/ka-lite configuration directory.")
@@ -88,6 +93,9 @@ def install_kalite():
 #    KIWIX WiKi Offline 
 #================================
 def install_kiwix():
+    print "========================================="
+    print "Installing KIWIX components"
+    print "========================================="
     sudo("mkdir -p /var/kiwix/bin") or die("Unable to make create kiwix directories")
     kiwix_version = "0.9"
     sudo("sh -c 'wget -O - http://downloads.sourceforge.net/project/kiwix/"+kiwix_version+"/kiwix-server-"+kiwix_version+"-linux-armv5tejl.tar.bz2 | tar xj -C /var/kiwix/bin'") or die("Unable to download kiwix-server")
@@ -114,7 +122,7 @@ def install_citadel():
     print "========================================="
     print "Installing CitaDel mail solution"
     print "========================================="
-    sudo("apt-get install -y citadel-suite")
+    sudo("apt-get install citadel-suite")   # Not fully automated yet as it hangs the PI
     sudo("sendcommand \"conf PUTVAL|c_default_cal_zone|Europe/Amsterdam\"") or die("Unable to set Citadel time zone")
     return True
 
@@ -122,6 +130,9 @@ def install_citadel():
 # WordPress installer
 #================================
 def install_wordpress():
+    print "========================================="
+    print "Install WordPress components"
+    print "========================================="
     if installed_modules.index('apache'):
         sudo("cd /var/www/html/")   # check if this is OK!!!!!!
         sudo("rm *")
@@ -247,12 +258,10 @@ def install_wifi():
     print "========================================="
     print "Install and Configure WiFi"
     print "========================================="
-    # Set WiFI IP Address
     sudo("ifconfig wlan0 " + base_ip ) or die("Unable to set wlan0 IP address (" + base_ip + ")")
-    
-    sudo("apt-get install hostapd") or die ("Unable to install IP tables persistent")
-    sudo("apt-get -y install hostapd isc-dhcp-server") or die("Unable install hostapd and isc-dhcp-server.")
-    sudo("apt-get install iptables-persistent") or die ("Unable to install IP tables persistent")
+    sudo("apt-get -y install hostapd") or die ("Unable to install hostapd persistent")
+    sudo("apt-get -y install hostapd isc-dhcp-server") or die("Unable install hostapd and isc-dhcp-server.") # Fails to start !!!!!
+    sudo("apt-get -y install iptables-persistent") or die ("Unable to install IP tables persistent")
     return True
 
 #================================
@@ -263,6 +272,7 @@ def install_wifi2():
     print "Install and Configure WiFi"
     print "========================================="
     sudo("ifconfig wlan0 " + base_ip ) or die("Unable to set wlan0 IP address (" + base_ip + ")")
+    # No further config at the moment
     return True
 
     sudo("apt-get -y install hostapd udhcpd") or die("Unable install hostapd and udhcpd.")
@@ -299,6 +309,8 @@ def install_wifi2():
 # Setup Network
 #================================
 def install_network():
+    #disable for now
+    return True
     print "========================================="
     print "Installing Network settings"
     print "========================================="
