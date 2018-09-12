@@ -49,6 +49,8 @@ during installation so that the install script can configure it properly. Raspbe
 
 Last updated : 2018/04/06 
 
+THis project is shared under a [GPL3 license](https://www.gnu.org/licenses/gpl.txt).
+
 Applicable Licenses: See licenses file.
 
 Original source : https://github.com/rachelproject/rachelpios
