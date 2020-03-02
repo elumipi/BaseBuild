@@ -6,8 +6,7 @@ Purpose is to provide a classroom environment for educational project in Tanzani
 Please visit http://www.dean.ngo/ict4e/digital-classroom-box-elimupi/ for more information
 
 ## Introduction
-THIS IS WORK IN PROGRESS: DO NOT USE!!!!
--- All code will be ported to Python --  
+THIS IS WORK IN PROGRESS: Use with care!!!!
 
 
 ## Functions
