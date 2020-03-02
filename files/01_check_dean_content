@@ -1,7 +1,9 @@
-#!/bin/sh
-# This script creates the model name symlink in /var/run/usbmount.
-# Copyright (C) 2005 Martin Dickopp
+#!/usr/bin/env python
+#=========================================================================================================
+# Automounter script for USB storage devices.
+#  This script is run each time an USB device is attached to the platform.
 #
+#  Copyright © 2018 DEAN
 # This file is free software; the copyright holder gives unlimited
 # permission to copy and/or distribute it, with or without
 # modifications, as long as this notice is preserved.
@@ -11,12 +13,83 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 #
-set -e
+#    Date        |By      | Description
+# ---------------+--------+----------------------------------------
+#    2018-Nov-13 | PVe    | Initial version
+#=========================================================================================================
+import sys
+import os
+import subprocess
+import argparse
+import shutil
+import urllib
+import argparse
+import platform
+import logging
 
-# Check mountpount for autorun.inf file
-if test -e $UM_MOUNTPOINT/autorun.inf; then
-    # autorun file found, process it
+def set_log():
+    logging.basicConfig(format='%(asctime)s|%(levelname)s:%(message)s', level=logging.DEBUG, datefmt='%m/%d/%Y %H:%M:%S')
     
-fi
+#================================
+# Read INI file
+#================================
+def read_ini():
+    autorun = False
+    dean_content = False
+    open_content = False
+    open_command = ""
+    
+    fname = os.path.join(UM_MOUNTPOINT,"autorun.inf")
+    #================================
+    # check if autorun.inf exist
+    #================================
+    if os.path.isfile(fname): 
+        with open(fname) as f:
+            for line in f:
+                line = line.strip()
+                if len(line) > 0:
+                    if line[0] == "[":
+                        autorun = False
+                    if line == "[autorun]":
+                        autorun = True
+                    if autorun and line[:4] == "open":
+                        logging.info("DEAN content open [" + line[5:200] + "]")
+                        open_content = True
+                        open_command = line[5:200]
+                    elif autorun and line == "type=dean":
+                        dean_content = True
+    else:
+        logging.warning("DEAN: No autorun.inf file found")
+    if dean_content and open_content:
+        logging.info("open : " + open_command)
+        return open_command
+    else:
+        logging.warning("No open")
+        return False
+    
+#================================
+# Auto-mounter environment variables
+#================================
+UM_DEVICE       = os.environ['UM_DEVICE']       # file name of the device node
+UM_MOUNTPOINT   = os.environ['UM_MOUNTPOINT']   # Mount point
+UM_FILESYSTEM   = os.environ['UM_FILESYSTEM']   # file system type
+UM_MOUNTOPTIONS = os.environ['UM_MOUNTOPTIONS'] # mount options that have been passed to the mount command
+UM_VENDOR       = os.environ['UM_VENDOR']       # vendor of the device (empty if unknown)
+UM_MODEL        = os.environ['UM_MODEL']        # model name of the device (empty if unknown)
 
-exit 0
+#================================
+# Main code
+#================================
+set_log()
+
+logging.info("DEAN auto-mount script started")
+
+run_file = read_ini()
+
+if run_file:
+    if os.path.isfile(run_file):
+        logging.info("Start [" + open + "]")
+    else:
+        logging.error("Run file [" + open + "] not found")
+else:
+    logging.info("No start")
